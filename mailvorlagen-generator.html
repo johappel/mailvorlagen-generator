@@ -1,0 +1,2396 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mailvorlagen-Generator</title>
+  <style>
+    :root {
+      --bg: #edf3f7;
+      --bg-strong: #dbe8ee;
+      --panel: #ffffff;
+      --panel-soft: #f6fafc;
+      --line: #cad7e1;
+      --line-strong: #9bb3c5;
+      --text: #1a2a36;
+      --muted: #566979;
+      --accent: #0f5f7d;
+      --accent-strong: #0a465d;
+      --accent-soft: #e6f2f7;
+      --success: #1f6b45;
+      --success-bg: #ebf8f0;
+      --warn: #915200;
+      --warn-bg: #fff4e6;
+      --danger: #a32121;
+      --danger-bg: #fdecec;
+      --shadow: 0 20px 42px rgba(19, 35, 48, 0.08);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(15, 95, 125, 0.14), transparent 28%),
+        linear-gradient(180deg, #f6f9fb 0%, var(--bg) 100%);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 0.78rem 1rem;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
+    }
+
+    button:hover {
+      background: var(--accent-strong);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button.secondary {
+      background: var(--panel);
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    button.secondary:hover {
+      background: #f2f7fa;
+    }
+
+    button.ghost {
+      background: transparent;
+      color: var(--accent-strong);
+      border-color: var(--line);
+    }
+
+    button.ghost:hover {
+      background: var(--accent-soft);
+    }
+
+    button.danger {
+      background: #b63131;
+    }
+
+    button.danger:hover {
+      background: #912323;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+      outline: 3px solid rgba(15, 95, 125, 0.24);
+      outline-offset: 2px;
+    }
+
+    button[disabled] {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="date"],
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      padding: 0.82rem 0.9rem;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .app-shell {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    .hero {
+      background: linear-gradient(140deg, rgba(15, 95, 125, 0.08), rgba(255, 255, 255, 0.96));
+      border: 1px solid rgba(15, 95, 125, 0.14);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 0.6rem;
+      font-size: clamp(1.9rem, 4vw, 2.8rem);
+    }
+
+    .hero p {
+      margin: 0.5rem 0 0;
+      max-width: 80ch;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    .tab-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 20px;
+    }
+
+    .tab-button {
+      min-width: 170px;
+      background: rgba(255, 255, 255, 0.72);
+      border-color: rgba(15, 95, 125, 0.12);
+      color: var(--text);
+    }
+
+    .tab-button[aria-selected="true"] {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .layout {
+      display: grid;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(26, 42, 54, 0.08);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel.hidden {
+      display: none;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .panel h2,
+    .panel h3 {
+      margin-top: 0;
+      margin-bottom: 0.7rem;
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .two-columns {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: minmax(320px, 1.1fr) minmax(320px, 0.9fr);
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field label,
+    .field .field-label {
+      font-weight: 650;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel-soft);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      max-height: 40px;
+    }
+
+    .toolbar button,
+    .actions button {
+      min-height: 46px;
+    }
+
+    .note,
+    .status,
+    .warning-box,
+    .error-box {
+      border-radius: 16px;
+      padding: 14px 16px;
+      line-height: 1.5;
+    }
+
+    .note {
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    .status {
+      background: var(--success-bg);
+      border: 1px solid rgba(31, 107, 69, 0.18);
+      color: var(--success);
+    }
+
+    .warning-box {
+      background: var(--warn-bg);
+      border: 1px solid rgba(145, 82, 0, 0.18);
+      color: var(--warn);
+    }
+
+    .error-box {
+      background: var(--danger-bg);
+      border: 1px solid rgba(163, 33, 33, 0.18);
+      color: var(--danger);
+    }
+
+    .checkbox-group {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+
+    .checkbox-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: 1.45;
+    }
+
+    .checkbox-option input {
+      margin-top: 0.18rem;
+      flex: 0 0 auto;
+    }
+
+    .output,
+    .template-preview {
+      min-height: 220px;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #fbfdff;
+      padding: 18px;
+    }
+
+    .subject-box {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f4f8fb;
+      padding: 12px 14px;
+    }
+
+    .field-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .field-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fbfdff;
+      display: grid;
+      gap: 10px;
+    }
+
+    .field-card-header {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: start;
+    }
+
+    .field-card-header strong {
+      display: block;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    .template-stamp {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .placeholder-help {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .inline-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      border: 1px solid rgba(15, 95, 125, 0.16);
+      padding: 0.4rem 0.7rem;
+      font-size: 0.92rem;
+    }
+
+    .split-heading {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .file-input {
+      padding: 0.65rem 0.75rem;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    dialog {
+      border: none;
+      border-radius: 18px;
+      padding: 0;
+      width: min(96vw, 620px);
+      box-shadow: 0 28px 60px rgba(12, 24, 35, 0.32);
+      color: var(--text);
+    }
+
+    dialog::backdrop {
+      background: rgba(14, 26, 36, 0.45);
+    }
+
+    .dialog-shell {
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+      background: var(--panel);
+    }
+
+    .dialog-shell h3 {
+      margin: 0;
+    }
+
+    .dialog-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 960px) {
+      .two-columns {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app-shell {
+        padding: 16px 12px 28px;
+      }
+
+      .hero,
+      .panel {
+        padding: 18px;
+      }
+
+      .tab-button {
+        flex: 1 1 100%;
+      }
+
+      .toolbar button,
+      .actions button {
+        width: 100%;
+      }
+
+      .field-card-header {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <h1>Mailvorlagen-Generator</h1>
+      <p>Diese Anwendung läuft lokal in Ihrem Browser. Eingegebene Daten werden nicht versendet und nicht an externe Server übertragen. Prüfen Sie Inhalt, Ton und schulrechtliche Angemessenheit der erzeugten Texte vor dem Versand über Ihr dienstliches E-Mail-Programm.</p>
+      <div class="tab-bar" role="tablist" aria-label="Bereiche">
+        <button class="tab-button" type="button" role="tab" aria-selected="true" aria-controls="panel-compose" data-tab="compose">E-Mail erstellen</button>
+        <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-templates" data-tab="templates">Vorlagen bearbeiten</button>
+        <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-settings" data-tab="settings">Einstellungen</button>
+        <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-transfer" data-tab="transfer">Import/Export</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel" id="app-messages" aria-live="polite"></section>
+
+      <section class="panel" id="panel-compose" role="tabpanel">
+        <div class="stack">
+          <!-- <div class="note">Hinweis: Die erzeugten Texte sind Formulierungshilfen. Bitte prüfen Sie Inhalt, Ton und schulrechtliche Angemessenheit vor dem Versand.</div> -->
+          <div class="field">
+            <label for="compose-template-select">Vorlage auswählen</label>
+            <select id="compose-template-select"></select>
+          </div>
+          <div id="compose-form-area" class="stack"></div>
+          <div class="actions">
+            <button type="button" id="generate-email-button">E-Mail generieren</button>
+            <button type="button" id="copy-email-button" class="secondary">Text kopieren</button>
+          </div>
+          <div id="compose-warnings" class="stack"></div>
+          <div class="subject-box">
+            <strong>Betreff</strong>
+            <div id="output-subject"></div>
+          </div>
+          <div>
+            <strong>Generierter Text</strong>
+            <div id="output-body" class="output" tabindex="0"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="panel-templates" role="tabpanel">
+        <div class="two-columns">
+          <div class="stack">
+            <div class="split-heading">
+              <h2>Vorlagen bearbeiten</h2>
+              <div class="actions">
+                <button type="button" id="new-template-button" class="secondary">Neue Vorlage</button>
+                <button type="button" id="duplicate-template-button" class="secondary">Duplizieren</button>
+                <button type="button" id="delete-template-button" class="danger">Vorlage löschen</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="template-editor-select">Vorlage auswählen</label>
+              <select id="template-editor-select"></select>
+            </div>
+            <div class="grid">
+              <div class="field">
+                <label for="template-title-input">Vorlagenname</label>
+                <input id="template-title-input" type="text">
+              </div>
+              <div class="field">
+                <label for="template-subject-input">Betreff</label>
+                <input id="template-subject-input" type="text">
+              </div>
+            </div>
+            <div class="field">
+              <label for="template-description-input">Beschreibung</label>
+              <input id="template-description-input" type="text">
+            </div>
+            <div class="field">
+              <span class="field-label">Bausteine einfügen</span>
+              <div class="toolbar">
+                <button type="button" class="secondary" data-insert="text">Textfeld einfügen</button>
+                <button type="button" class="secondary" data-insert="options">Optionen einfügen</button>
+                <button type="button" class="secondary" data-insert="date">Datum einfügen</button>
+                <button type="button" class="secondary" data-insert="teacherName">Lehrername einfügen</button>
+                <button type="button" class="secondary" data-insert="teacherEmail">E-Mail einfügen</button>
+                <button type="button" class="secondary" data-insert="signature">Signatur einfügen</button>
+              </div>
+              <div class="placeholder-help">Felder werden im Text als interne Platzhalter gespeichert. Nutzerinnen und Nutzer müssen diese Syntax nicht selbst schreiben.</div>
+            </div>
+            <div class="field">
+              <label for="template-body-input">Vorlagentext</label>
+              <textarea id="template-body-input" rows="25"></textarea>
+            </div>
+            <div class="actions">
+              <button type="button" id="preview-template-button">Vorschau</button>
+              <button type="button" id="save-template-button" class="secondary">Vorlage speichern</button>
+            </div>
+            <div id="template-validation-area" class="stack"></div>
+          </div>
+
+          <div class="stack">
+            <div>
+              <h3>Vorschau</h3>
+              <div class="subject-box">
+                <strong>Betreff</strong>
+                <div id="preview-subject"></div>
+              </div>
+              <div id="preview-body" class="template-preview"></div>
+              <div id="preview-warnings" class="stack"></div>
+            </div>
+            <div>
+              <h3>Felder dieser Vorlage</h3>
+              <div id="template-field-list" class="field-list"></div>
+            </div>
+            
+            <div class="note">
+              <strong>Bearbeitungshinweis</strong><br>
+              Über die Feldliste können Sie Felder erneut bearbeiten oder entfernen. Beim Entfernen können Sie den zugehörigen Platzhalter im Vorlagentext gleich mit löschen.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="panel-settings" role="tabpanel">
+        <div class="stack">
+          <h2>Einstellungen</h2>
+          <div class="note">Diese Werte werden lokal in diesem Browser gespeichert. Signatur und Lehrkraftdaten erscheinen automatisch in Vorlagen, die diese Bausteine enthalten.</div>
+          <form id="settings-form" class="stack">
+            <div class="grid">
+              <div class="field">
+                <label for="teacher-name-input">Name der Lehrkraft</label>
+                <input id="teacher-name-input" name="teacherName" type="text" autocomplete="name">
+              </div>
+              <div class="field">
+                <label for="teacher-email-input">E-Mail-Adresse</label>
+                <input id="teacher-email-input" name="teacherEmail" type="email" autocomplete="email">
+              </div>
+            </div>
+            <div class="field">
+              <label for="signature-input">Signatur</label>
+              <textarea id="signature-input" name="signature" rows="6"></textarea>
+            </div>
+            <div class="field">
+              <label for="date-format-select">Datumsformat</label>
+              <select id="date-format-select" name="dateFormat">
+                <option value="dd.mm.yyyy">dd.mm.yyyy</option>
+                <option value="yyyy-mm-dd">yyyy-mm-dd</option>
+              </select>
+            </div>
+            <div class="actions">
+              <button type="submit">Einstellungen speichern</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="panel-transfer" role="tabpanel">
+        <div class="stack">
+          <h2>Import/Export</h2>
+          <div class="note">Die gespeicherten Vorlagen liegen nur in diesem Browser auf diesem Gerät. Nutzen Sie den Export, um Ihre Vorlagen zu sichern oder auf einen anderen Rechner zu übertragen.</div>
+          <div class="actions">
+            <button type="button" id="export-data-button">Daten exportieren</button>
+            <button type="button" id="reset-data-button" class="secondary">Auf Beispielvorlage zurücksetzen</button>
+          </div>
+          <div class="field">
+            <label for="import-file-input">Daten importieren</label>
+            <input id="import-file-input" class="file-input" type="file" accept=".json,application/json">
+          </div>
+          <div class="warning-box">Sicherheits- und Reputationshinweis: Exportdateien können personenbezogene oder sensible schulische Formulierungen enthalten. Prüfen Sie vor Weitergabe, ob das wirklich erforderlich und zulässig ist.</div>
+          <div id="transfer-info" class="stack"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="text-field-dialog">
+    <form method="dialog" class="dialog-shell" id="text-field-form">
+      <h3 id="text-field-dialog-title">Textfeld einfügen</h3>
+      <div class="field">
+        <label for="text-field-label-input">Bezeichnung</label>
+        <input id="text-field-label-input" type="text" required>
+      </div>
+      <div class="grid">
+        <div class="field">
+          <label for="text-field-rows-input">Zeilen</label>
+          <input id="text-field-rows-input" type="text" inputmode="numeric" value="1">
+        </div>
+        <div class="field">
+          <label class="checkbox-option" for="text-field-required-input">
+            <input id="text-field-required-input" type="checkbox" checked>
+            <span>Pflichtfeld</span>
+          </label>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="secondary" data-close-dialog="text-field-dialog">Abbrechen</button>
+        <button type="submit">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="options-field-dialog">
+    <form method="dialog" class="dialog-shell" id="options-field-form">
+      <h3 id="options-field-dialog-title">Optionen einfügen</h3>
+      <div class="field">
+        <label for="options-field-label-input">Bezeichnung</label>
+        <input id="options-field-label-input" type="text" required>
+      </div>
+      <div class="field">
+        <label for="options-field-options-input">Optionen, eine pro Zeile</label>
+        <textarea id="options-field-options-input" rows="8"></textarea>
+      </div>
+      <div class="grid">
+        <div class="field">
+          <label for="options-field-display-select">Darstellung</label>
+          <select id="options-field-display-select">
+            <option value="list">Liste</option>
+            <option value="inline">Fließtext</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="checkbox-option" for="options-field-hide-unchecked-input">
+            <input id="options-field-hide-unchecked-input" type="checkbox" checked>
+            <span>Nicht gewählte Optionen ausblenden</span>
+          </label>
+        </div>
+      </div>
+      <div class="field">
+        <label class="checkbox-option" for="options-field-required-input">
+          <input id="options-field-required-input" type="checkbox">
+          <span>Pflichtfeld</span>
+        </label>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="secondary" data-close-dialog="options-field-dialog">Abbrechen</button>
+        <button type="submit">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="date-field-dialog">
+    <form method="dialog" class="dialog-shell" id="date-field-form">
+      <h3 id="date-field-dialog-title">Datum einfügen</h3>
+      <div class="field">
+        <label for="date-field-label-input">Bezeichnung</label>
+        <input id="date-field-label-input" type="text" required>
+      </div>
+      <div class="field">
+        <label for="date-field-mode-select">Datumstyp</label>
+        <select id="date-field-mode-select">
+          <option value="today">Heutiges Datum</option>
+          <option value="specific">Bestimmtes Datum</option>
+          <option value="manual">Ausfüllbares Datum</option>
+        </select>
+      </div>
+      <div class="field" id="date-field-specific-wrapper">
+        <label for="date-field-specific-input">Bestimmtes Datum</label>
+        <input id="date-field-specific-input" type="date">
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="secondary" data-close-dialog="date-field-dialog">Abbrechen</button>
+        <button type="submit">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var STORAGE_KEY = "mailvorlagenGenerator.state.v1";
+      var APP_VERSION = 1;
+      var SETTING_KEYS = ["teacherName", "teacherEmail", "signature"];
+      var SETTING_FIELD_CONFIG = {
+        teacherName: { id: "lehrername", label: "Lehrername" },
+        teacherEmail: { id: "e-mail", label: "E-Mail" },
+        signature: { id: "signatur", label: "Signatur" }
+      };
+
+      var appState = null;
+      var uiState = {
+        activeTab: "compose",
+        composeTemplateId: "",
+        editorTemplateId: "",
+        formValues: {},
+        lastGenerated: { subject: "", body: "", warnings: [] },
+        previewResult: { subject: "", body: "Noch keine Vorschau erzeugt.", warnings: [] },
+        messages: [],
+        editorSelection: { target: "body", start: 0, end: 0 },
+        activeDialogFieldId: null
+      };
+
+      var elements = {
+        messageArea: document.getElementById("app-messages"),
+        tabButtons: Array.prototype.slice.call(document.querySelectorAll(".tab-button")),
+        panels: {
+          compose: document.getElementById("panel-compose"),
+          templates: document.getElementById("panel-templates"),
+          settings: document.getElementById("panel-settings"),
+          transfer: document.getElementById("panel-transfer")
+        },
+        composeTemplateSelect: document.getElementById("compose-template-select"),
+        composeFormArea: document.getElementById("compose-form-area"),
+        composeWarnings: document.getElementById("compose-warnings"),
+        generateEmailButton: document.getElementById("generate-email-button"),
+        copyEmailButton: document.getElementById("copy-email-button"),
+        outputSubject: document.getElementById("output-subject"),
+        outputBody: document.getElementById("output-body"),
+        templateEditorSelect: document.getElementById("template-editor-select"),
+        templateTitleInput: document.getElementById("template-title-input"),
+        templateSubjectInput: document.getElementById("template-subject-input"),
+        templateDescriptionInput: document.getElementById("template-description-input"),
+        templateBodyInput: document.getElementById("template-body-input"),
+        templateFieldList: document.getElementById("template-field-list"),
+        templateValidationArea: document.getElementById("template-validation-area"),
+        previewTemplateButton: document.getElementById("preview-template-button"),
+        previewSubject: document.getElementById("preview-subject"),
+        previewBody: document.getElementById("preview-body"),
+        previewWarnings: document.getElementById("preview-warnings"),
+        newTemplateButton: document.getElementById("new-template-button"),
+        duplicateTemplateButton: document.getElementById("duplicate-template-button"),
+        deleteTemplateButton: document.getElementById("delete-template-button"),
+        toolbarButtons: Array.prototype.slice.call(document.querySelectorAll("[data-insert]")),
+        settingsForm: document.getElementById("settings-form"),
+        teacherNameInput: document.getElementById("teacher-name-input"),
+        teacherEmailInput: document.getElementById("teacher-email-input"),
+        signatureInput: document.getElementById("signature-input"),
+        dateFormatSelect: document.getElementById("date-format-select"),
+        saveTemplateButton: document.getElementById("save-template-button"),
+        exportDataButton: document.getElementById("export-data-button"),
+        importFileInput: document.getElementById("import-file-input"),
+        resetDataButton: document.getElementById("reset-data-button"),
+        transferInfo: document.getElementById("transfer-info"),
+        dialogs: {
+          text: document.getElementById("text-field-dialog"),
+          options: document.getElementById("options-field-dialog"),
+          date: document.getElementById("date-field-dialog")
+        },
+        textFieldForm: document.getElementById("text-field-form"),
+        textFieldDialogTitle: document.getElementById("text-field-dialog-title"),
+        textFieldLabelInput: document.getElementById("text-field-label-input"),
+        textFieldRowsInput: document.getElementById("text-field-rows-input"),
+        textFieldRequiredInput: document.getElementById("text-field-required-input"),
+        optionsFieldForm: document.getElementById("options-field-form"),
+        optionsFieldDialogTitle: document.getElementById("options-field-dialog-title"),
+        optionsFieldLabelInput: document.getElementById("options-field-label-input"),
+        optionsFieldOptionsInput: document.getElementById("options-field-options-input"),
+        optionsFieldDisplaySelect: document.getElementById("options-field-display-select"),
+        optionsFieldHideUncheckedInput: document.getElementById("options-field-hide-unchecked-input"),
+        optionsFieldRequiredInput: document.getElementById("options-field-required-input"),
+        dateFieldForm: document.getElementById("date-field-form"),
+        dateFieldDialogTitle: document.getElementById("date-field-dialog-title"),
+        dateFieldLabelInput: document.getElementById("date-field-label-input"),
+        dateFieldModeSelect: document.getElementById("date-field-mode-select"),
+        dateFieldSpecificWrapper: document.getElementById("date-field-specific-wrapper"),
+        dateFieldSpecificInput: document.getElementById("date-field-specific-input")
+      };
+
+      function createId(prefix) {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          return prefix + "_" + window.crypto.randomUUID().replace(/-/g, "");
+        }
+        return prefix + "_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+      }
+
+      function createReadableFieldId(label, fields, currentFieldId) {
+        var base = slugify(label || "baustein");
+        var counter = 1;
+        var candidate = base + "-" + counter;
+        while (fields && fields[candidate] && candidate !== currentFieldId) {
+          counter += 1;
+          candidate = base + "-" + counter;
+        }
+        return candidate;
+      }
+
+      function slugify(value) {
+        var normalized = String(value || "")
+          .trim()
+          .toLowerCase()
+          .replace(/ä/g, "ae")
+          .replace(/ö/g, "oe")
+          .replace(/ü/g, "ue")
+          .replace(/ß/g, "ss")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+        return normalized || "baustein";
+      }
+
+      function nowIso() {
+        return new Date().toISOString();
+      }
+
+      function createExampleTemplate() {
+        var now = nowIso();
+        return {
+          id: "template_absence_notice",
+          title: "Viele Fehltage wegen Krankheit",
+          subject: "Hinweis zu Fehlzeiten",
+          description: "Beispielvorlage für Hinweise an Eltern bei gehäuften Fehlzeiten.",
+          body: [
+            "Sehr geehrte Eltern von {{name-der-schuelerin-des-schuelers-1}},",
+            "",
+            "ich möchte Sie hiermit darauf hinweisen, dass Ihr Kind in den vergangenen Monaten eine ungewöhnlich hohe Anzahl von Fehlzeiten zu verzeichnen hat. Dies äußert sich durch:",
+            "",
+            "{{auffaelligkeiten-1}}",
+            "",
+            "Ich möchte Sie darauf aufmerksam machen, dass häufige Fehlzeiten - unabhängig von der Ursache - sich nachteilig auf die Leistungsbewertung Ihres Kindes auswirken können.",
+            "",
+            "Als Eltern tragen Sie die Verantwortung für die Einhaltung der Schulpflicht sowie dafür, dass versäumte Inhalte eigenständig nachgeholt werden. Ich muss Sie daher dringend bitten, die Situation mit Ihrem Kind zu besprechen und künftig verlässlich auf eine regelmäßige Teilnahme am Unterricht und an den Leistungsnachweisen zu achten.",
+            "",
+            "Sollten den gehäuften Fehlzeiten medizinische Gründe oder gesundheitliche Einschränkungen zugrunde liegen, bitte ich Sie, mir diese Information zeitnah zukommen zu lassen. Dies hilft uns, die Situation Ihres Kindes richtig einzuordnen.",
+            "",
+            "Bei Rückfragen kommen Sie gerne auf mich zu.",
+            "",
+            "{{signatur}}"
+          ].join("\n"),
+          fields: {
+            "name-der-schuelerin-des-schuelers-1": {
+              id: "name-der-schuelerin-des-schuelers-1",
+              type: "text",
+              label: "Name der Schülerin / des Schülers",
+              rows: 1,
+              required: true
+            },
+            "auffaelligkeiten-1": {
+              id: "auffaelligkeiten-1",
+              type: "options",
+              label: "Auffälligkeiten",
+              options: [
+                "gehäufte Krankheitstage",
+                "wiederholtes Unterbrechen des Unterrichts am Vormittag aufgrund von Erkrankungen",
+                "gehäuftes Fehlen an Prüfungstagen"
+              ],
+              display: "list",
+              hideUnchecked: true,
+              required: false
+            },
+            signatur: {
+              id: "signatur",
+              type: "setting",
+              settingKey: "signature",
+              label: "Signatur"
+            }
+          },
+          createdAt: now,
+          updatedAt: now
+        };
+      }
+
+      function getDefaultState() {
+        return {
+          version: APP_VERSION,
+          settings: {
+            teacherName: "",
+            teacherEmail: "",
+            signature: "",
+            dateFormat: "dd.mm.yyyy"
+          },
+          templates: [createExampleTemplate()]
+        };
+      }
+
+      function validateFieldDefinition(field, issues, templateTitle) {
+        if (!field || typeof field !== "object" || typeof field.id !== "string" || !field.id) {
+          issues.push("Eine Felddefinition in \"" + templateTitle + "\" war ungültig und wurde ausgelassen.");
+          return null;
+        }
+
+        if (field.type === "text") {
+          return {
+            id: field.id,
+            type: "text",
+            label: typeof field.label === "string" && field.label.trim() ? field.label.trim() : "Textfeld",
+            rows: Number(field.rows) > 1 ? Math.max(2, Number(field.rows)) : 1,
+            required: Boolean(field.required),
+            placeholder: typeof field.placeholder === "string" ? field.placeholder : ""
+          };
+        }
+
+        if (field.type === "options") {
+          return {
+            id: field.id,
+            type: "options",
+            label: typeof field.label === "string" && field.label.trim() ? field.label.trim() : "Auswahl",
+            options: Array.isArray(field.options) ? field.options.filter(function (option) {
+              return typeof option === "string" && option.trim();
+            }) : [],
+            display: field.display === "inline" ? "inline" : "list",
+            hideUnchecked: field.hideUnchecked !== false,
+            required: Boolean(field.required)
+          };
+        }
+
+        if (field.type === "setting") {
+          if (SETTING_KEYS.indexOf(field.settingKey) === -1) {
+            issues.push("Ein Einstellungsfeld in \"" + templateTitle + "\" war ungültig und wurde ausgelassen.");
+            return null;
+          }
+          return {
+            id: field.id,
+            type: "setting",
+            label: typeof field.label === "string" && field.label.trim() ? field.label.trim() : "Einstellung",
+            settingKey: field.settingKey
+          };
+        }
+
+        if (field.type === "date") {
+          return {
+            id: field.id,
+            type: "date",
+            label: typeof field.label === "string" && field.label.trim() ? field.label.trim() : "Datum",
+            mode: field.mode === "manual" || field.mode === "specific" ? field.mode : "today",
+            formatFromSettings: field.formatFromSettings !== false,
+            specificDate: typeof field.specificDate === "string" ? field.specificDate : ""
+          };
+        }
+
+        issues.push("Ein Feld in \"" + templateTitle + "\" hatte einen unbekannten Typ und wurde ausgelassen.");
+        return null;
+      }
+
+      function validateTemplate(rawTemplate, index, issues) {
+        if (!rawTemplate || typeof rawTemplate !== "object") {
+          issues.push("Eine gespeicherte Vorlage konnte nicht gelesen werden und wurde ausgelassen.");
+          return null;
+        }
+
+        var normalized = {
+          id: typeof rawTemplate.id === "string" && rawTemplate.id ? rawTemplate.id : createId("template"),
+          title: typeof rawTemplate.title === "string" && rawTemplate.title.trim() ? rawTemplate.title.trim() : "Vorlage " + (index + 1),
+          subject: typeof rawTemplate.subject === "string" ? rawTemplate.subject : "",
+          description: typeof rawTemplate.description === "string" ? rawTemplate.description : "",
+          body: typeof rawTemplate.body === "string" ? rawTemplate.body : "",
+          fields: {},
+          createdAt: typeof rawTemplate.createdAt === "string" ? rawTemplate.createdAt : nowIso(),
+          updatedAt: typeof rawTemplate.updatedAt === "string" ? rawTemplate.updatedAt : nowIso()
+        };
+
+        var rawFields = rawTemplate.fields && typeof rawTemplate.fields === "object" ? rawTemplate.fields : {};
+        Object.keys(rawFields).forEach(function (fieldId) {
+          var field = validateFieldDefinition(rawFields[fieldId], issues, normalized.title);
+          if (field) {
+            normalized.fields[field.id] = field;
+          }
+        });
+
+        migrateReadableFieldIds(normalized);
+
+        if (!Object.keys(normalized.fields).length) {
+          issues.push("Die Vorlage \"" + normalized.title + "\" enthält keine gültigen Felder.");
+        }
+
+        return normalized;
+      }
+
+      function migrateReadableFieldIds(template) {
+        var fieldIdMap = {};
+        var migratedFields = {};
+        Object.keys(template.fields).forEach(function (fieldId) {
+          var field = template.fields[fieldId];
+          var newFieldId = fieldId;
+          if (fieldId.indexOf("field_") === 0) {
+            if (field.type === "setting" && field.settingKey && SETTING_FIELD_CONFIG[field.settingKey]) {
+              newFieldId = SETTING_FIELD_CONFIG[field.settingKey].id;
+            } else {
+              newFieldId = createReadableFieldId(field.label, migratedFields, fieldId);
+            }
+            fieldIdMap[fieldId] = newFieldId;
+          }
+          field.id = newFieldId;
+          migratedFields[newFieldId] = field;
+        });
+
+        template.fields = migratedFields;
+        Object.keys(fieldIdMap).forEach(function (oldFieldId) {
+          var pattern = new RegExp("\\{\\{" + escapeRegExp(oldFieldId) + "\\}\\}", "g");
+          template.subject = (template.subject || "").replace(pattern, "{{" + fieldIdMap[oldFieldId] + "}}");
+          template.body = (template.body || "").replace(pattern, "{{" + fieldIdMap[oldFieldId] + "}}");
+        });
+      }
+
+      function validateState(raw) {
+        var issues = [];
+        var fallback = getDefaultState();
+
+        if (!raw || typeof raw !== "object") {
+          issues.push("Es wurden keine gültigen gespeicherten Daten gefunden. Die Beispielvorlage wurde geladen.");
+          return { state: fallback, issues: issues };
+        }
+
+        var settings = raw.settings && typeof raw.settings === "object" ? raw.settings : {};
+        var normalizedSettings = {
+          teacherName: typeof settings.teacherName === "string" ? settings.teacherName : "",
+          teacherEmail: typeof settings.teacherEmail === "string" ? settings.teacherEmail : "",
+          signature: typeof settings.signature === "string" ? settings.signature : "",
+          dateFormat: settings.dateFormat === "yyyy-mm-dd" ? "yyyy-mm-dd" : "dd.mm.yyyy"
+        };
+
+        var templates = Array.isArray(raw.templates) ? raw.templates : [];
+        if (!templates.length) {
+          issues.push("Es waren keine gespeicherten Vorlagen vorhanden. Die Beispielvorlage wurde ergänzt.");
+          templates = fallback.templates.slice();
+        }
+
+        var normalizedTemplates = templates.map(function (template, index) {
+          return validateTemplate(template, index, issues);
+        }).filter(Boolean);
+
+        if (!normalizedTemplates.length) {
+          issues.push("Keine gespeicherte Vorlage war verwendbar. Die Beispielvorlage wurde wiederhergestellt.");
+          normalizedTemplates = fallback.templates.slice();
+        }
+
+        return {
+          state: {
+            version: APP_VERSION,
+            settings: normalizedSettings,
+            templates: normalizedTemplates
+          },
+          issues: issues
+        };
+      }
+
+      function loadState() {
+        try {
+          var raw = window.localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            return {
+              state: getDefaultState(),
+              issues: ["Es wurden noch keine Daten gefunden. Die Beispielvorlage wurde geladen."]
+            };
+          }
+          return validateState(JSON.parse(raw));
+        } catch (error) {
+          return {
+            state: getDefaultState(),
+            issues: ["Gespeicherte Daten konnten nicht gelesen werden. Die App startet mit sicheren Standardwerten."]
+          };
+        }
+      }
+
+      function saveState(state) {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      function resetState() {
+        appState = getDefaultState();
+        saveState(appState);
+        syncTemplateSelection(appState.templates[0].id, true);
+      }
+
+      function pushMessage(type, text) {
+        uiState.messages = [{ type: type, text: text }];
+        renderMessages();
+      }
+
+      function setMessages(items) {
+        uiState.messages = items.slice();
+        renderMessages();
+      }
+
+      function renderMessages() {
+        if (!uiState.messages.length) {
+          elements.messageArea.innerHTML = '<div class="note">Alle Daten bleiben lokal auf diesem Gerät und nur in diesem Browser gespeichert.</div>';
+          return;
+        }
+        elements.messageArea.innerHTML = uiState.messages.map(function (item) {
+          return '<div class="' + item.type + '">' + escapeHtml(item.text) + "</div>";
+        }).join("");
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function getTemplateById(templateId) {
+        return appState.templates.find(function (template) {
+          return template.id === templateId;
+        }) || appState.templates[0];
+      }
+
+      function formatDate(date, format) {
+        if (Object.prototype.toString.call(date) !== "[object Date]" || Number.isNaN(date.getTime())) {
+          return "";
+        }
+        var year = date.getFullYear();
+        var month = String(date.getMonth() + 1).padStart(2, "0");
+        var day = String(date.getDate()).padStart(2, "0");
+        if (format === "yyyy-mm-dd") {
+          return year + "-" + month + "-" + day;
+        }
+        return day + "." + month + "." + year;
+      }
+
+      function getInitialFormValues(template) {
+        var values = {};
+        Object.keys(template.fields).forEach(function (fieldId) {
+          var field = template.fields[fieldId];
+          if (field.type === "options") {
+            values[fieldId] = [];
+          } else if (field.type === "text" || field.type === "date") {
+            values[fieldId] = "";
+          }
+        });
+        return values;
+      }
+
+      function syncTemplateSelection(templateId, resetMessagesOnly) {
+        var template = getTemplateById(templateId);
+        uiState.composeTemplateId = template.id;
+        uiState.editorTemplateId = template.id;
+        uiState.formValues = getInitialFormValues(template);
+        uiState.lastGenerated = { subject: "", body: "", warnings: [] };
+        uiState.previewResult = { subject: "", body: "Noch keine Vorschau erzeugt.", warnings: [] };
+        uiState.activeDialogFieldId = null;
+        if (!resetMessagesOnly) {
+          uiState.messages = [];
+        }
+      }
+
+      function createBlankTemplate() {
+        var now = nowIso();
+        return {
+          id: createId("template"),
+          title: "Neue Vorlage",
+          subject: "",
+          description: "",
+          body: "",
+          fields: {},
+          createdAt: now,
+          updatedAt: now
+        };
+      }
+
+      function cloneTemplate(template) {
+        var copy = JSON.parse(JSON.stringify(template));
+        copy.id = createId("template");
+        copy.title = template.title + " (Kopie)";
+        copy.createdAt = nowIso();
+        copy.updatedAt = nowIso();
+        return copy;
+      }
+
+      function collectEditorTemplate() {
+        var currentTemplate = getTemplateById(uiState.editorTemplateId);
+        return {
+          id: currentTemplate.id,
+          title: elements.templateTitleInput.value.trim(),
+          subject: elements.templateSubjectInput.value.trim(),
+          description: elements.templateDescriptionInput.value.trim(),
+          body: elements.templateBodyInput.value.replace(/\r\n/g, "\n"),
+          fields: cloneFields(currentTemplate.fields),
+          createdAt: currentTemplate.createdAt,
+          updatedAt: nowIso()
+        };
+      }
+
+      function cloneFields(fields) {
+        return JSON.parse(JSON.stringify(fields || {}));
+      }
+
+      function buildDefaultValueForField(field, settings, mode) {
+        if (mode === "preview") {
+          if (field.type === "text") {
+            if (/name/i.test(field.label)) {
+              return "Max Beispiel";
+            }
+            return field.rows > 1 ? "Dies ist ein Beispieltext." : "Beispielwert";
+          }
+          if (field.type === "options") {
+            return field.options.slice();
+          }
+        }
+
+        if (field.type === "setting") {
+          var settingValue = settings[field.settingKey];
+          if (settingValue) {
+            return settingValue;
+          }
+          if (mode === "preview") {
+            if (field.settingKey === "teacherName") {
+              return "Alex Beispiel";
+            }
+            if (field.settingKey === "teacherEmail") {
+              return "alex.beispiel@schule.invalid";
+            }
+            if (field.settingKey === "signature") {
+              return "Mit freundlichen Grüßen\nAlex Beispiel";
+            }
+          }
+          return "";
+        }
+
+        if (field.type === "date") {
+          if (field.mode === "specific") {
+            return formatDate(new Date(field.specificDate), settings.dateFormat);
+          }
+          if (field.mode === "manual" && mode !== "preview") {
+            return "";
+          }
+          return formatDate(new Date(), settings.dateFormat);
+        }
+
+        return "";
+      }
+
+      function renderOptionsField(field, value) {
+        var selected = Array.isArray(value) ? value : [];
+        if (!selected.length && field.hideUnchecked) {
+          return "";
+        }
+        if (field.display === "inline") {
+          if (field.hideUnchecked) {
+            return selected.join(", ");
+          }
+          return field.options.map(function (option) {
+            return (selected.indexOf(option) >= 0 ? "☑ " : "☐ ") + option;
+          }).join(", ");
+        }
+        if (field.hideUnchecked) {
+          return selected.map(function (option) {
+            return "- " + option;
+          }).join("\n");
+        }
+        return field.options.map(function (option) {
+          return (selected.indexOf(option) >= 0 ? "☑ " : "☐ ") + option;
+        }).join("\n");
+      }
+
+      function renderTemplate(template, formValues, settings, mode) {
+        var warnings = [];
+        var regex = /\{\{([a-zA-Z0-9_-]+)\}\}/g;
+        var subject = (template.subject || "").replace(regex, function (_, fieldId) {
+          return resolveField(fieldId);
+        });
+        var body = (template.body || "").replace(regex, function (_, fieldId) {
+          return resolveField(fieldId);
+        });
+
+        function resolveField(fieldId) {
+          var field = template.fields[fieldId];
+          if (!field) {
+            warnings.push("Im Vorlagentext kommt ein unbekanntes Feld vor: " + fieldId);
+            return "";
+          }
+
+          var value = formValues[fieldId];
+          if (value === undefined || value === null || value === "") {
+            value = buildDefaultValueForField(field, settings, mode);
+          }
+
+          if (field.type === "text") {
+            var textValue = typeof value === "string" ? value.trim() : "";
+            if (field.required && !textValue) {
+              warnings.push("Bitte füllen Sie das Feld \"" + field.label + "\" aus.");
+            }
+            return textValue;
+          }
+
+          if (field.type === "options") {
+            var selected = Array.isArray(value) ? value : [];
+            if (field.required && !selected.length) {
+              warnings.push("Bitte wählen Sie mindestens einen Punkt bei \"" + field.label + "\" aus.");
+            }
+            return renderOptionsField(field, selected);
+          }
+
+          if (field.type === "setting") {
+            var settingValue = typeof value === "string" ? value : "";
+            if (!settingValue) {
+              warnings.push("\"" + field.label + "\" ist noch nicht in den Einstellungen hinterlegt.");
+            }
+            return settingValue;
+          }
+
+          if (field.type === "date") {
+            if (field.mode === "specific") {
+              if (field.specificDate) {
+                return formatDate(new Date(field.specificDate), settings.dateFormat);
+              }
+              warnings.push("Bitte hinterlegen Sie für \"" + field.label + "\" ein bestimmtes Datum.");
+              return "";
+            }
+            if (field.mode === "manual") {
+              if (typeof value === "string" && value) {
+                return field.formatFromSettings ? formatDate(new Date(value), settings.dateFormat) : value;
+              }
+              warnings.push("Bitte geben Sie für \"" + field.label + "\" ein Datum an.");
+              return "";
+            }
+            return formatDate(new Date(), settings.dateFormat);
+          }
+
+          return "";
+        }
+
+        return {
+          subject: subject.trim(),
+          body: body.replace(/\n{3,}/g, "\n\n").trim(),
+          warnings: dedupe(warnings)
+        };
+      }
+
+      function dedupe(items) {
+        var seen = {};
+        return items.filter(function (item) {
+          if (seen[item]) {
+            return false;
+          }
+          seen[item] = true;
+          return true;
+        });
+      }
+
+      function collectPlaceholderIds(body) {
+        var ids = [];
+        var regex = /\{\{([a-zA-Z0-9_-]+)\}\}/g;
+        var match;
+        while ((match = regex.exec(body)) !== null) {
+          ids.push(match[1]);
+        }
+        return ids;
+      }
+
+      function validateTemplateContent(template) {
+        var warnings = [];
+        var searchableText = (template.subject || "") + "\n" + (template.body || "");
+        var placeholderIds = collectPlaceholderIds(searchableText);
+        var knownIds = Object.keys(template.fields);
+
+        if (!template.title) {
+          warnings.push("Die Vorlage sollte einen Namen haben.");
+        }
+
+        placeholderIds.forEach(function (fieldId) {
+          if (!template.fields[fieldId]) {
+            warnings.push("Im Vorlagentext kommt das unbekannte Feld \"" + fieldId + "\" vor.");
+          }
+        });
+
+        knownIds.forEach(function (fieldId) {
+          var field = template.fields[fieldId];
+          if (placeholderIds.indexOf(fieldId) === -1) {
+            warnings.push("Das Feld \"" + field.label + "\" ist definiert, kommt aber im Vorlagentext nicht vor.");
+          }
+          if (field.type === "options" && !field.options.length) {
+            warnings.push("Das Feld \"" + field.label + "\" enthält noch keine Optionen.");
+          }
+          if ((field.type === "text" || field.type === "options" || field.type === "date") && !field.label.trim()) {
+            warnings.push("Ein Feld in dieser Vorlage hat keine Bezeichnung.");
+          }
+          if (field.type === "setting" && SETTING_KEYS.indexOf(field.settingKey) === -1) {
+            warnings.push("Ein Einstellungsfeld verwendet einen ungültigen Schlüssel.");
+          }
+          if (field.type === "date" && field.mode === "specific" && !field.specificDate) {
+            warnings.push("Das Feld \"" + field.label + "\" braucht ein bestimmtes Datum.");
+          }
+        });
+
+        return dedupe(warnings);
+      }
+
+      function switchTab(tabName) {
+        uiState.activeTab = tabName;
+        elements.tabButtons.forEach(function (button) {
+          var active = button.getAttribute("data-tab") === tabName;
+          button.setAttribute("aria-selected", String(active));
+        });
+        Object.keys(elements.panels).forEach(function (key) {
+          elements.panels[key].classList.toggle("hidden", key !== tabName);
+        });
+      }
+
+      function renderTemplateSelects() {
+        var options = appState.templates.map(function (template) {
+          return '<option value="' + escapeHtml(template.id) + '">' + escapeHtml(template.title) + "</option>";
+        }).join("");
+        elements.composeTemplateSelect.innerHTML = options;
+        elements.templateEditorSelect.innerHTML = options;
+        elements.composeTemplateSelect.value = uiState.composeTemplateId;
+        elements.templateEditorSelect.value = uiState.editorTemplateId;
+      }
+
+      function renderComposeForm(template) {
+        var container = elements.composeFormArea;
+        container.innerHTML = "";
+
+        var heading = document.createElement("h2");
+        heading.textContent = "Eingabefelder zur Vorlage";
+        container.appendChild(heading);
+
+        if (template.description) {
+          var description = document.createElement("div");
+          description.className = "note";
+          description.textContent = template.description;
+          container.appendChild(description);
+        }
+
+        Object.keys(template.fields).forEach(function (fieldId) {
+          var field = template.fields[fieldId];
+
+          if (field.type === "setting") {
+            var info = document.createElement("div");
+            info.className = "note";
+            info.textContent = field.label + " wird aus den Einstellungen eingefügt.";
+            container.appendChild(info);
+            return;
+          }
+
+          var wrapper = document.createElement("div");
+          wrapper.className = "field";
+
+          var label = document.createElement("label");
+          label.className = "field-label";
+          label.htmlFor = "compose-field-" + field.id;
+          label.textContent = field.label + (field.required ? " *" : "");
+          wrapper.appendChild(label);
+
+          if (field.type === "text") {
+            if (field.rows > 1) {
+              var textarea = document.createElement("textarea");
+              textarea.id = "compose-field-" + field.id;
+              textarea.rows = field.rows;
+              textarea.value = uiState.formValues[field.id] || "";
+              textarea.addEventListener("input", function (event) {
+                uiState.formValues[field.id] = event.target.value;
+              });
+              wrapper.appendChild(textarea);
+            } else {
+              var input = document.createElement("input");
+              input.id = "compose-field-" + field.id;
+              input.type = "text";
+              input.value = uiState.formValues[field.id] || "";
+              input.addEventListener("input", function (event) {
+                uiState.formValues[field.id] = event.target.value;
+              });
+              wrapper.appendChild(input);
+            }
+          }
+
+          if (field.type === "options") {
+            var checkboxGroup = document.createElement("div");
+            checkboxGroup.className = "checkbox-group";
+
+            field.options.forEach(function (option, index) {
+              var optionLabel = document.createElement("label");
+              optionLabel.className = "checkbox-option";
+              optionLabel.htmlFor = "compose-field-" + field.id + "-" + index;
+
+              var checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.id = "compose-field-" + field.id + "-" + index;
+              checkbox.checked = Array.isArray(uiState.formValues[field.id]) && uiState.formValues[field.id].indexOf(option) >= 0;
+              checkbox.addEventListener("change", function (event) {
+                var current = Array.isArray(uiState.formValues[field.id]) ? uiState.formValues[field.id].slice() : [];
+                if (event.target.checked) {
+                  if (current.indexOf(option) === -1) {
+                    current.push(option);
+                  }
+                } else {
+                  current = current.filter(function (item) {
+                    return item !== option;
+                  });
+                }
+                uiState.formValues[field.id] = current;
+              });
+
+              var text = document.createElement("span");
+              text.textContent = option;
+
+              optionLabel.appendChild(checkbox);
+              optionLabel.appendChild(text);
+              checkboxGroup.appendChild(optionLabel);
+            });
+
+            wrapper.appendChild(checkboxGroup);
+          }
+
+          if (field.type === "date") {
+            if (field.mode === "manual") {
+              var dateInput = document.createElement("input");
+              dateInput.id = "compose-field-" + field.id;
+              dateInput.type = "date";
+              dateInput.value = uiState.formValues[field.id] || "";
+              dateInput.addEventListener("input", function (event) {
+                uiState.formValues[field.id] = event.target.value;
+              });
+              wrapper.appendChild(dateInput);
+            } else {
+              var dateNote = document.createElement("div");
+              dateNote.className = "note";
+              dateNote.textContent = field.mode === "specific" ? "Dieses Datum ist in der Vorlage festgelegt." : "Das heutige Datum wird automatisch eingefügt.";
+              wrapper.appendChild(dateNote);
+            }
+          }
+
+          container.appendChild(wrapper);
+        });
+      }
+
+      function renderComposeWarnings(warnings) {
+        elements.composeWarnings.innerHTML = "";
+        warnings.forEach(function (warning) {
+          var box = document.createElement("div");
+          box.className = "warning-box";
+          box.textContent = warning;
+          elements.composeWarnings.appendChild(box);
+        });
+      }
+
+      function renderOutput(result) {
+        elements.outputSubject.textContent = result.subject || "(kein Betreff)";
+        elements.outputBody.textContent = result.body || "Noch kein Text generiert.";
+      }
+
+      function describeField(field) {
+        if (field.type === "text") {
+          return "Textfeld, " + field.rows + " Zeile(n)" + (field.required ? ", Pflichtfeld" : "");
+        }
+        if (field.type === "options") {
+          return "Auswahl, " + field.options.length + " Option(en), Darstellung: " + field.display + (field.required ? ", Pflichtfeld" : "");
+        }
+        if (field.type === "setting") {
+          return "Einstellung aus " + field.settingKey;
+        }
+        if (field.type === "date") {
+          if (field.mode === "specific") {
+            return "Datum, bestimmter Tag: " + (field.specificDate || "nicht gesetzt");
+          }
+          return "Datum, Modus: " + field.mode;
+        }
+        return field.type;
+      }
+
+      function renderEditor(template) {
+        elements.templateTitleInput.value = template.title;
+        elements.templateSubjectInput.value = template.subject || "";
+        elements.templateDescriptionInput.value = template.description || "";
+        elements.templateBodyInput.value = template.body || "";
+        elements.templateFieldList.innerHTML = "";
+
+        var fieldIds = Object.keys(template.fields);
+        if (!fieldIds.length) {
+          elements.templateFieldList.innerHTML = '<div class="note">Diese Vorlage enthält noch keine Felder.</div>';
+        } else {
+          fieldIds.forEach(function (fieldId) {
+            var field = template.fields[fieldId];
+            var card = document.createElement("div");
+            card.className = "field-card";
+
+            var header = document.createElement("div");
+            header.className = "field-card-header";
+
+            var textBlock = document.createElement("div");
+            var title = document.createElement("strong");
+            title.textContent = field.label;
+            var meta = document.createElement("div");
+            meta.className = "meta";
+            meta.textContent = describeField(field);
+            textBlock.appendChild(title);
+            textBlock.appendChild(meta);
+
+            var buttonGroup = document.createElement("div");
+            buttonGroup.className = "actions";
+
+            if (field.type === "text" || field.type === "options" || field.type === "date") {
+              var editButton = document.createElement("button");
+              editButton.type = "button";
+              editButton.className = "secondary";
+              editButton.textContent = "Bearbeiten";
+              editButton.addEventListener("click", function () {
+                openFieldDialogForEdit(field.id);
+              });
+              buttonGroup.appendChild(editButton);
+            }
+
+            var removeButton = document.createElement("button");
+            removeButton.type = "button";
+            removeButton.className = "ghost";
+            removeButton.textContent = "Entfernen";
+            removeButton.addEventListener("click", function () {
+              removeFieldFromTemplate(field.id);
+            });
+            buttonGroup.appendChild(removeButton);
+
+            header.appendChild(textBlock);
+            header.appendChild(buttonGroup);
+            card.appendChild(header);
+
+            var placeholderChip = document.createElement("div");
+            placeholderChip.className = "inline-list";
+            placeholderChip.innerHTML = '<span class="chip">' + escapeHtml("{{" + field.id + "}}") + "</span>";
+            card.appendChild(placeholderChip);
+
+            elements.templateFieldList.appendChild(card);
+          });
+        }
+
+        var validationWarnings = validateTemplateContent(template);
+        renderValidationWarnings(validationWarnings);
+      }
+
+      function renderValidationWarnings(warnings) {
+        elements.templateValidationArea.innerHTML = "";
+        if (!warnings.length) {
+          elements.templateValidationArea.innerHTML = '<div class="status">Zur aktuellen Vorlage gibt es keine auffälligen Warnungen.</div>';
+          return;
+        }
+        warnings.forEach(function (warning) {
+          var box = document.createElement("div");
+          box.className = "warning-box";
+          box.textContent = warning;
+          elements.templateValidationArea.appendChild(box);
+        });
+      }
+
+      function renderPreviewResult(result) {
+        elements.previewSubject.textContent = result.subject || "(kein Betreff)";
+        elements.previewBody.textContent = result.body || "Noch keine Vorschau erzeugt.";
+        elements.previewWarnings.innerHTML = "";
+        if (!result.warnings.length) {
+          return;
+        }
+        result.warnings.forEach(function (warning) {
+          var box = document.createElement("div");
+          box.className = "warning-box";
+          box.textContent = warning;
+          elements.previewWarnings.appendChild(box);
+        });
+      }
+
+      function renderSettingsForm() {
+        elements.teacherNameInput.value = appState.settings.teacherName;
+        elements.teacherEmailInput.value = appState.settings.teacherEmail;
+        elements.signatureInput.value = appState.settings.signature;
+        elements.dateFormatSelect.value = appState.settings.dateFormat;
+      }
+
+      function renderTransferInfo() {
+        elements.transferInfo.innerHTML = '<div class="note">Gespeicherte Vorlagen: ' + appState.templates.length + "</div>";
+      }
+
+      function renderAll() {
+        var composeTemplate = getTemplateById(uiState.composeTemplateId);
+        var editorTemplate = getTemplateById(uiState.editorTemplateId);
+        renderTemplateSelects();
+        renderComposeForm(composeTemplate);
+        renderComposeWarnings(uiState.lastGenerated.warnings || []);
+        renderOutput(uiState.lastGenerated);
+        renderEditor(editorTemplate);
+        renderPreviewResult(uiState.previewResult);
+        renderSettingsForm();
+        renderTransferInfo();
+        renderMessages();
+        switchTab(uiState.activeTab);
+      }
+
+      function saveStateAndRender(messageType, messageText) {
+        saveState(appState);
+        if (messageText) {
+          pushMessage(messageType, messageText);
+        }
+        renderAll();
+      }
+
+      function persistEditorTemplate(template, messageText) {
+        var index = appState.templates.findIndex(function (item) {
+          return item.id === template.id;
+        });
+        if (index === -1) {
+          appState.templates.push(template);
+        } else {
+          appState.templates[index] = template;
+        }
+        saveStateAndRender("status", messageText || "Die Vorlage wurde gespeichert.");
+      }
+
+      function handleTemplateSelectionChange(templateId) {
+        syncTemplateSelection(templateId);
+        renderAll();
+      }
+
+      function createPreviewValues(template) {
+        var values = {};
+        Object.keys(template.fields).forEach(function (fieldId) {
+          var field = template.fields[fieldId];
+          values[fieldId] = buildDefaultValueForField(field, appState.settings, "preview");
+        });
+        return values;
+      }
+
+      function generateCurrentEmail() {
+        var template = getTemplateById(uiState.composeTemplateId);
+        var result = renderTemplate(template, uiState.formValues, appState.settings, "real");
+        uiState.lastGenerated = result;
+        renderComposeWarnings(result.warnings);
+        renderOutput(result);
+      }
+
+      function copyGeneratedText() {
+        var text = uiState.lastGenerated.body || elements.outputBody.textContent || "";
+        if (!text || text === "Noch kein Text generiert.") {
+          pushMessage("warning-box", "Bitte erzeugen Sie zuerst einen Text, bevor Sie ihn kopieren.");
+          return;
+        }
+
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+          navigator.clipboard.writeText(text).then(function () {
+            pushMessage("status", "Der Text wurde in die Zwischenablage kopiert.");
+          }).catch(function () {
+            fallbackCopyText(text);
+          });
+          return;
+        }
+
+        fallbackCopyText(text);
+      }
+
+      function fallbackCopyText(text) {
+        var range = document.createRange();
+        range.selectNodeContents(elements.outputBody);
+        var selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        var copied = false;
+        try {
+          copied = document.execCommand("copy");
+        } catch (error) {
+          copied = false;
+        }
+
+        if (copied) {
+          pushMessage("status", "Der Text wurde in die Zwischenablage kopiert.");
+          return;
+        }
+
+        pushMessage("warning-box", "Bitte mit Strg+C kopieren. Der Text wurde dafür markiert.");
+      }
+
+      function saveSettings(event) {
+        event.preventDefault();
+        appState.settings.teacherName = elements.teacherNameInput.value.trim();
+        appState.settings.teacherEmail = elements.teacherEmailInput.value.trim();
+        appState.settings.signature = elements.signatureInput.value.replace(/\r\n/g, "\n").trim();
+        appState.settings.dateFormat = elements.dateFormatSelect.value === "yyyy-mm-dd" ? "yyyy-mm-dd" : "dd.mm.yyyy";
+        saveState(appState);
+        pushMessage("status", "Die Einstellungen wurden lokal gespeichert.");
+        if (uiState.lastGenerated.body) {
+          generateCurrentEmail();
+        }
+        if (uiState.previewResult.body && uiState.previewResult.body !== "Noch keine Vorschau erzeugt.") {
+          runPreview();
+        } else {
+          renderAll();
+        }
+      }
+
+      function saveEditorSelection() {
+        var activeElement = document.activeElement === elements.templateSubjectInput ? elements.templateSubjectInput : elements.templateBodyInput;
+        uiState.editorSelection.target = activeElement === elements.templateSubjectInput ? "subject" : "body";
+        uiState.editorSelection.start = activeElement.selectionStart || 0;
+        uiState.editorSelection.end = activeElement.selectionEnd || 0;
+      }
+
+      function insertAtSelection(text) {
+        var target = uiState.editorSelection.target === "subject" ? elements.templateSubjectInput : elements.templateBodyInput;
+        var start = target.selectionStart || 0;
+        var end = target.selectionEnd || 0;
+        var value = target.value;
+        target.value = value.slice(0, start) + text + value.slice(end);
+        target.focus();
+        var newPosition = start + text.length;
+        target.setSelectionRange(newPosition, newPosition);
+        saveEditorSelection();
+      }
+
+      function readPlaceholderAtCursor(input) {
+        var position = input.selectionStart || 0;
+        var value = input.value || "";
+        var regex = /\{\{([a-zA-Z0-9_-]+)\}\}/g;
+        var match;
+        while ((match = regex.exec(value)) !== null) {
+          if (position >= match.index && position <= match.index + match[0].length) {
+            return match[1];
+          }
+        }
+        return "";
+      }
+
+      function handleEditorClick(input, targetName) {
+        uiState.editorSelection.target = targetName;
+        uiState.editorSelection.start = input.selectionStart || 0;
+        uiState.editorSelection.end = input.selectionEnd || 0;
+        var fieldId = readPlaceholderAtCursor(input);
+        if (fieldId && collectEditorTemplate().fields[fieldId]) {
+          openFieldDialogForEdit(fieldId);
+        }
+      }
+
+      function updateEditorTemplateInMemory(mutator) {
+        var template = collectEditorTemplate();
+        mutator(template);
+        template.updatedAt = nowIso();
+        var index = appState.templates.findIndex(function (item) {
+          return item.id === template.id;
+        });
+        if (index >= 0) {
+          appState.templates[index] = template;
+        }
+        renderAll();
+        if (uiState.editorSelection.target === "subject") {
+          elements.templateSubjectInput.focus();
+        } else {
+          elements.templateBodyInput.focus();
+        }
+      }
+
+      function openDialog(dialog) {
+        if (typeof dialog.showModal === "function") {
+          dialog.showModal();
+        }
+      }
+
+      function closeDialogById(dialogId) {
+        var dialog = document.getElementById(dialogId);
+        if (dialog && dialog.open) {
+          dialog.close();
+        }
+      }
+
+      function openTextFieldDialog(fieldId) {
+        uiState.activeDialogFieldId = fieldId || null;
+        var template = collectEditorTemplate();
+        var field = fieldId ? template.fields[fieldId] : null;
+        elements.textFieldDialogTitle.textContent = field ? "Textfeld bearbeiten" : "Textfeld einfügen";
+        elements.textFieldLabelInput.value = field ? field.label : "Name";
+        elements.textFieldRowsInput.value = field ? String(field.rows) : "1";
+        elements.textFieldRequiredInput.checked = field ? Boolean(field.required) : true;
+        openDialog(elements.dialogs.text);
+        elements.textFieldLabelInput.focus();
+      }
+
+      function openOptionsFieldDialog(fieldId) {
+        uiState.activeDialogFieldId = fieldId || null;
+        var template = collectEditorTemplate();
+        var field = fieldId ? template.fields[fieldId] : null;
+        elements.optionsFieldDialogTitle.textContent = field ? "Optionen bearbeiten" : "Optionen einfügen";
+        elements.optionsFieldLabelInput.value = field ? field.label : "Auswahl";
+        elements.optionsFieldOptionsInput.value = field ? field.options.join("\n") : [
+          "gehäufte Krankheitstage",
+          "wiederholtes Unterbrechen des Unterrichts am Vormittag aufgrund von Erkrankungen",
+          "gehäuftes Fehlen an Prüfungstagen"
+        ].join("\n");
+        elements.optionsFieldDisplaySelect.value = field ? field.display : "list";
+        elements.optionsFieldHideUncheckedInput.checked = field ? field.hideUnchecked !== false : true;
+        elements.optionsFieldRequiredInput.checked = field ? Boolean(field.required) : false;
+        openDialog(elements.dialogs.options);
+        elements.optionsFieldLabelInput.focus();
+      }
+
+      function openDateFieldDialog(fieldId) {
+        uiState.activeDialogFieldId = fieldId || null;
+        var template = collectEditorTemplate();
+        var field = fieldId ? template.fields[fieldId] : null;
+        elements.dateFieldDialogTitle.textContent = field ? "Datum bearbeiten" : "Datum einfügen";
+        elements.dateFieldLabelInput.value = field ? field.label : "Datum";
+        elements.dateFieldModeSelect.value = field ? field.mode : "today";
+        elements.dateFieldSpecificInput.value = field && field.specificDate ? field.specificDate : formatDate(new Date(), "yyyy-mm-dd");
+        toggleSpecificDateInput();
+        openDialog(elements.dialogs.date);
+        elements.dateFieldLabelInput.focus();
+      }
+
+      function toggleSpecificDateInput() {
+        var showSpecificDate = elements.dateFieldModeSelect.value === "specific";
+        elements.dateFieldSpecificWrapper.classList.toggle("hidden", !showSpecificDate);
+        elements.dateFieldSpecificInput.disabled = !showSpecificDate;
+      }
+
+      function openFieldDialogForEdit(fieldId) {
+        var template = collectEditorTemplate();
+        var field = template.fields[fieldId];
+        if (!field) {
+          pushMessage("error-box", "Das ausgewählte Feld konnte nicht mehr gefunden werden.");
+          return;
+        }
+        if (field.type === "text") {
+          openTextFieldDialog(fieldId);
+          return;
+        }
+        if (field.type === "options") {
+          openOptionsFieldDialog(fieldId);
+          return;
+        }
+        if (field.type === "date") {
+          openDateFieldDialog(fieldId);
+        }
+      }
+
+      function applyFieldChange(field) {
+        var currentTemplate = collectEditorTemplate();
+        var isNew = !uiState.activeDialogFieldId;
+        var fieldId = uiState.activeDialogFieldId || field.id;
+        currentTemplate.fields[fieldId] = field;
+        if (isNew) {
+          insertAtSelection("{{" + field.id + "}}");
+          currentTemplate.subject = elements.templateSubjectInput.value.replace(/\r\n/g, "\n");
+          currentTemplate.body = elements.templateBodyInput.value.replace(/\r\n/g, "\n");
+        }
+        currentTemplate.updatedAt = nowIso();
+        var index = appState.templates.findIndex(function (item) {
+          return item.id === currentTemplate.id;
+        });
+        appState.templates[index] = currentTemplate;
+        saveState(appState);
+        uiState.editorTemplateId = currentTemplate.id;
+        uiState.composeTemplateId = currentTemplate.id;
+        renderAll();
+        pushMessage("status", isNew ? "Das Feld wurde eingefügt." : "Das Feld wurde aktualisiert.");
+      }
+
+      function submitTextFieldForm(event) {
+        event.preventDefault();
+        var rows = Math.max(1, parseInt(elements.textFieldRowsInput.value, 10) || 1);
+        var template = collectEditorTemplate();
+        var label = elements.textFieldLabelInput.value.trim() || "Textfeld";
+        var fieldId = uiState.activeDialogFieldId || createReadableFieldId(label, template.fields);
+        applyFieldChange({
+          id: fieldId,
+          type: "text",
+          label: label,
+          rows: rows,
+          required: elements.textFieldRequiredInput.checked
+        });
+        elements.dialogs.text.close();
+      }
+
+      function submitOptionsFieldForm(event) {
+        event.preventDefault();
+        var template = collectEditorTemplate();
+        var label = elements.optionsFieldLabelInput.value.trim() || "Auswahl";
+        var fieldId = uiState.activeDialogFieldId || createReadableFieldId(label, template.fields);
+        var options = elements.optionsFieldOptionsInput.value
+          .replace(/\r\n/g, "\n")
+          .split("\n")
+          .map(function (item) { return item.trim(); })
+          .filter(Boolean);
+        applyFieldChange({
+          id: fieldId,
+          type: "options",
+          label: label,
+          options: options,
+          display: elements.optionsFieldDisplaySelect.value === "inline" ? "inline" : "list",
+          hideUnchecked: elements.optionsFieldHideUncheckedInput.checked,
+          required: elements.optionsFieldRequiredInput.checked
+        });
+        elements.dialogs.options.close();
+      }
+
+      function submitDateFieldForm(event) {
+        event.preventDefault();
+        var template = collectEditorTemplate();
+        var label = elements.dateFieldLabelInput.value.trim() || "Datum";
+        var fieldId = uiState.activeDialogFieldId || createReadableFieldId(label, template.fields);
+        var mode = elements.dateFieldModeSelect.value === "manual" || elements.dateFieldModeSelect.value === "specific" ? elements.dateFieldModeSelect.value : "today";
+        applyFieldChange({
+          id: fieldId,
+          type: "date",
+          label: label,
+          mode: mode,
+          formatFromSettings: true,
+          specificDate: mode === "specific" ? elements.dateFieldSpecificInput.value : ""
+        });
+        elements.dialogs.date.close();
+      }
+
+      function insertSettingField(settingKey) {
+        var config = SETTING_FIELD_CONFIG[settingKey];
+        if (!config) {
+          return;
+        }
+        updateEditorTemplateInMemory(function (template) {
+          template.fields[config.id] = {
+            id: config.id,
+            type: "setting",
+            label: config.label,
+            settingKey: settingKey
+          };
+          insertAtSelection("{{" + config.id + "}}");
+          template.subject = elements.templateSubjectInput.value.replace(/\r\n/g, "\n");
+          template.body = elements.templateBodyInput.value.replace(/\r\n/g, "\n");
+        });
+        saveState(appState);
+        pushMessage("status", config.label + " wurde in die Vorlage eingefügt.");
+      }
+
+      function removeFieldFromTemplate(fieldId) {
+        var template = collectEditorTemplate();
+        var field = template.fields[fieldId];
+        if (!field) {
+          return;
+        }
+
+        var removePlaceholder = window.confirm("Soll der Platzhalter dieses Feldes auch aus dem Vorlagentext entfernt werden?");
+        delete template.fields[fieldId];
+
+        if (removePlaceholder) {
+          var pattern = new RegExp("\\{\\{" + escapeRegExp(fieldId) + "\\}\\}\\n?", "g");
+          template.subject = (template.subject || "").replace(pattern, "");
+          template.body = template.body.replace(pattern, "");
+          template.body = template.body.replace(/\n{3,}/g, "\n\n");
+        }
+
+        template.updatedAt = nowIso();
+        var index = appState.templates.findIndex(function (item) {
+          return item.id === template.id;
+        });
+        appState.templates[index] = template;
+        saveStateAndRender("status", "Das Feld wurde entfernt.");
+      }
+
+      function escapeRegExp(value) {
+        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+
+      function saveCurrentTemplate() {
+        var template = collectEditorTemplate();
+        var warnings = validateTemplateContent(template);
+        var index = appState.templates.findIndex(function (item) {
+          return item.id === template.id;
+        });
+        if (index >= 0) {
+          appState.templates[index] = template;
+        }
+        saveState(appState);
+        renderAll();
+        if (warnings.length) {
+          pushMessage("warning-box", "Die Vorlage wurde gespeichert. Bitte beachten Sie die Warnungen im Bearbeitungsbereich.");
+        } else {
+          pushMessage("status", "Die Vorlage wurde gespeichert.");
+        }
+      }
+
+      function runPreview() {
+        var template = collectEditorTemplate();
+        var previewValues = createPreviewValues(template);
+        var result = renderTemplate(template, previewValues, appState.settings, "preview");
+        var validationWarnings = validateTemplateContent(template);
+        uiState.previewResult = {
+          subject: result.subject,
+          body: result.body,
+          warnings: dedupe(result.warnings.concat(validationWarnings))
+        };
+        renderPreviewResult(uiState.previewResult);
+        renderValidationWarnings(validationWarnings);
+      }
+
+      function createNewTemplate() {
+        var template = createBlankTemplate();
+        appState.templates.push(template);
+        saveState(appState);
+        syncTemplateSelection(template.id);
+        uiState.activeTab = "templates";
+        pushMessage("status", "Eine neue Vorlage wurde angelegt.");
+        renderAll();
+      }
+
+      function duplicateCurrentTemplate() {
+        var source = collectEditorTemplate();
+        var copy = cloneTemplate(source);
+        appState.templates.push(copy);
+        saveState(appState);
+        syncTemplateSelection(copy.id);
+        uiState.activeTab = "templates";
+        pushMessage("status", "Die Vorlage wurde dupliziert.");
+        renderAll();
+      }
+
+      function deleteCurrentTemplate() {
+        if (appState.templates.length === 1) {
+          pushMessage("warning-box", "Mindestens eine Vorlage muss erhalten bleiben.");
+          return;
+        }
+        var template = getTemplateById(uiState.editorTemplateId);
+        var confirmed = window.confirm("Soll die Vorlage \"" + template.title + "\" wirklich gelöscht werden?");
+        if (!confirmed) {
+          return;
+        }
+        appState.templates = appState.templates.filter(function (item) {
+          return item.id !== template.id;
+        });
+        saveState(appState);
+        syncTemplateSelection(appState.templates[0].id);
+        pushMessage("status", "Die Vorlage wurde gelöscht.");
+        renderAll();
+      }
+
+      function downloadTextFile(filename, text) {
+        var blob = new Blob([text], { type: "application/json;charset=utf-8" });
+        var url = URL.createObjectURL(blob);
+        var anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+      }
+
+      function exportState() {
+        var exportPayload = {
+          version: APP_VERSION,
+          exportedAt: nowIso(),
+          settings: appState.settings,
+          templates: appState.templates
+        };
+        downloadTextFile("mailvorlagen-generator-backup.json", JSON.stringify(exportPayload, null, 2));
+        pushMessage("status", "Die Daten wurden als JSON-Datei exportiert.");
+      }
+
+      function mergeImportedTemplates(existingTemplates, importedTemplates) {
+        var existingIds = {};
+        existingTemplates.forEach(function (template) {
+          existingIds[template.id] = true;
+        });
+
+        return importedTemplates.map(function (template) {
+          if (!existingIds[template.id]) {
+            existingIds[template.id] = true;
+            return template;
+          }
+          var clone = JSON.parse(JSON.stringify(template));
+          clone.id = createId("template");
+          var remappedFields = {};
+          var fieldIdMap = {};
+          Object.keys(clone.fields).forEach(function (fieldId) {
+            var newFieldId = createReadableFieldId(clone.fields[fieldId].label || fieldId, Object.assign({}, existingIds, remappedFields));
+            fieldIdMap[fieldId] = newFieldId;
+          });
+          Object.keys(clone.fields).forEach(function (fieldId) {
+            var field = clone.fields[fieldId];
+            field.id = fieldIdMap[fieldId];
+            remappedFields[field.id] = field;
+          });
+          clone.fields = remappedFields;
+          Object.keys(fieldIdMap).forEach(function (oldFieldId) {
+            var pattern = new RegExp("\\{\\{" + escapeRegExp(oldFieldId) + "\\}\\}", "g");
+            clone.body = clone.body.replace(pattern, "{{" + fieldIdMap[oldFieldId] + "}}");
+            clone.subject = (clone.subject || "").replace(pattern, "{{" + fieldIdMap[oldFieldId] + "}}");
+          });
+          return clone;
+        });
+      }
+
+      function importStateFromFile(file) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          try {
+            var parsed = JSON.parse(String(reader.result || ""));
+            if (!parsed || typeof parsed !== "object") {
+              throw new Error("invalid");
+            }
+            if (parsed.version !== APP_VERSION) {
+              pushMessage("warning-box", "Die Datei hat eine andere Version. Der Import wurde nicht übernommen.");
+              return;
+            }
+
+            var validated = validateState(parsed);
+            var importedState = validated.state;
+            var replaceExisting = window.confirm("Sollen bestehende Daten vollständig ersetzt werden? Wählen Sie \"Abbrechen\", um importierte Vorlagen nur hinzuzufügen.");
+
+            if (replaceExisting) {
+              appState = importedState;
+              saveState(appState);
+              syncTemplateSelection(appState.templates[0].id);
+              setMessages([{ type: "status", text: "Die importierten Daten haben die bisherigen Daten ersetzt." }].concat(validated.issues.map(function (item) {
+                return { type: "warning-box", text: item };
+              })));
+              renderAll();
+              return;
+            }
+
+            var mergedTemplates = appState.templates.concat(mergeImportedTemplates(appState.templates, importedState.templates));
+            appState.templates = mergedTemplates;
+            appState.settings = importedState.settings;
+            saveState(appState);
+            syncTemplateSelection(uiState.editorTemplateId || appState.templates[0].id);
+            setMessages([{ type: "status", text: "Die importierten Vorlagen wurden hinzugefügt. Einstellungen wurden übernommen." }].concat(validated.issues.map(function (item) {
+              return { type: "warning-box", text: item };
+            })));
+            renderAll();
+          } catch (error) {
+            pushMessage("error-box", "Die ausgewählte Datei ist keine gültige Sicherung. Bestehende Daten bleiben unverändert.");
+          } finally {
+            elements.importFileInput.value = "";
+          }
+        };
+        reader.onerror = function () {
+          pushMessage("error-box", "Die Datei konnte nicht gelesen werden. Bestehende Daten bleiben erhalten.");
+          elements.importFileInput.value = "";
+        };
+        reader.readAsText(file, "utf-8");
+      }
+
+      function resetToDefaults() {
+        var confirmed = window.confirm("Sollen alle gespeicherten Vorlagen und Einstellungen auf den Ausgangszustand zurückgesetzt werden?");
+        if (!confirmed) {
+          return;
+        }
+        resetState();
+        pushMessage("status", "Die App wurde auf die Beispielvorlage zurückgesetzt.");
+        renderAll();
+      }
+
+      function handleInsertAction(action) {
+        saveEditorSelection();
+        if (action === "text") {
+          openTextFieldDialog(null);
+          return;
+        }
+        if (action === "options") {
+          openOptionsFieldDialog(null);
+          return;
+        }
+        if (action === "date") {
+          openDateFieldDialog(null);
+          return;
+        }
+        if (SETTING_KEYS.indexOf(action) >= 0) {
+          insertSettingField(action);
+        }
+      }
+
+      function attachEvents() {
+        elements.tabButtons.forEach(function (button) {
+          button.addEventListener("click", function () {
+            switchTab(button.getAttribute("data-tab"));
+          });
+        });
+
+        elements.composeTemplateSelect.addEventListener("change", function (event) {
+          uiState.composeTemplateId = event.target.value;
+          uiState.formValues = getInitialFormValues(getTemplateById(uiState.composeTemplateId));
+          uiState.lastGenerated = { subject: "", body: "", warnings: [] };
+          renderAll();
+        });
+
+        elements.templateEditorSelect.addEventListener("change", function (event) {
+          uiState.editorTemplateId = event.target.value;
+          uiState.composeTemplateId = event.target.value;
+          uiState.formValues = getInitialFormValues(getTemplateById(uiState.composeTemplateId));
+          uiState.previewResult = { subject: "", body: "Noch keine Vorschau erzeugt.", warnings: [] };
+          uiState.lastGenerated = { subject: "", body: "", warnings: [] };
+          renderAll();
+        });
+
+        elements.generateEmailButton.addEventListener("click", generateCurrentEmail);
+        elements.copyEmailButton.addEventListener("click", copyGeneratedText);
+        elements.settingsForm.addEventListener("submit", saveSettings);
+        elements.newTemplateButton.addEventListener("click", createNewTemplate);
+        elements.duplicateTemplateButton.addEventListener("click", duplicateCurrentTemplate);
+        elements.deleteTemplateButton.addEventListener("click", deleteCurrentTemplate);
+        elements.previewTemplateButton.addEventListener("click", runPreview);
+        elements.saveTemplateButton.addEventListener("click", saveCurrentTemplate);
+        elements.exportDataButton.addEventListener("click", exportState);
+        elements.resetDataButton.addEventListener("click", resetToDefaults);
+
+        elements.importFileInput.addEventListener("change", function (event) {
+          var file = event.target.files && event.target.files[0];
+          if (file) {
+            importStateFromFile(file);
+          }
+        });
+
+        elements.toolbarButtons.forEach(function (button) {
+          button.addEventListener("click", function () {
+            handleInsertAction(button.getAttribute("data-insert"));
+          });
+        });
+
+        elements.templateSubjectInput.addEventListener("click", function () {
+          handleEditorClick(elements.templateSubjectInput, "subject");
+        });
+        elements.templateSubjectInput.addEventListener("keyup", saveEditorSelection);
+        elements.templateSubjectInput.addEventListener("select", saveEditorSelection);
+        elements.templateSubjectInput.addEventListener("focus", saveEditorSelection);
+
+        elements.templateBodyInput.addEventListener("click", function () {
+          handleEditorClick(elements.templateBodyInput, "body");
+        });
+        elements.templateBodyInput.addEventListener("keyup", saveEditorSelection);
+        elements.templateBodyInput.addEventListener("select", saveEditorSelection);
+        elements.templateBodyInput.addEventListener("focus", saveEditorSelection);
+        elements.dateFieldModeSelect.addEventListener("change", toggleSpecificDateInput);
+
+        elements.textFieldForm.addEventListener("submit", submitTextFieldForm);
+        elements.optionsFieldForm.addEventListener("submit", submitOptionsFieldForm);
+        elements.dateFieldForm.addEventListener("submit", submitDateFieldForm);
+
+        Array.prototype.slice.call(document.querySelectorAll("[data-close-dialog]")).forEach(function (button) {
+          button.addEventListener("click", function () {
+            closeDialogById(button.getAttribute("data-close-dialog"));
+          });
+        });
+      }
+
+      function init() {
+        var loaded = loadState();
+        appState = loaded.state;
+        syncTemplateSelection(appState.templates[0].id, true);
+        if (loaded.issues.length) {
+          setMessages(loaded.issues.map(function (item) {
+            return { type: "warning-box", text: item };
+          }));
+        }
+        saveState(appState);
+        attachEvents();
+        renderAll();
+      }
+
+      init();
+    }());
+  </script>
+</body>
+</html>
