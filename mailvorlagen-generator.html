@@ -2547,6 +2547,38 @@
         renderAll();
       }
 
+      function appendFieldToSubject(fieldId) {
+        if (!fieldId) {
+          return;
+        }
+
+        var template = collectEditorTemplate();
+        if (!template.fields[fieldId]) {
+          pushMessage("error-box", "Das ausgewählte Feld konnte nicht gefunden werden.");
+          elements.templateSubjectFieldSelect.value = "";
+          return;
+        }
+
+        var subjectText = elements.templateSubjectInput.value.trim();
+        var placeholder = "{{" + fieldId + "}}";
+        var nextSubject = subjectText ? subjectText + " " + placeholder : placeholder;
+
+        elements.templateSubjectInput.value = nextSubject;
+        template.subject = nextSubject;
+        template.updatedAt = nowIso();
+
+        var index = appState.templates.findIndex(function (item) {
+          return item.id === template.id;
+        });
+        if (index >= 0) {
+          appState.templates[index] = template;
+        }
+
+        saveState(appState);
+        elements.templateSubjectFieldSelect.value = "";
+        pushMessage("status", "Das Feld wurde in den Betreff eingefügt.");
+      }
+
       function handleInsertAction(action) {
         saveEditorSelection();
         if (action === "text") {
@@ -2605,6 +2637,9 @@
         elements.exportTemplateButton.addEventListener("click", exportSingleTemplate);
         elements.resetDataButton.addEventListener("click", resetToDefaults);
         elements.transferTemplateSelect.addEventListener("change", renderTransferInfo);
+        elements.templateSubjectFieldSelect.addEventListener("change", function (event) {
+          appendFieldToSubject(event.target.value);
+        });
 
         elements.importFileInput.addEventListener("change", function (event) {
           var file = event.target.files && event.target.files[0];
