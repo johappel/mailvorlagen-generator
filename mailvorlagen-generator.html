@@ -601,14 +601,14 @@
             <div class="field">
               <span class="field-label">Bausteine</span>
               <div class="toolbar">
-                <button type="button" class="secondary" data-insert="text">Textfeld</button>
-                <button type="button" class="secondary" data-insert="studentName">Schülername</button>
-                <button type="button" class="secondary" data-insert="options">Optionen</button>
+                <button type="button" class="secondary" data-insert="studentName">Schüler(in)name</button>
+                <button type="button" class="secondary" data-insert="text">Beliebiges Textfeld</button>
+                <button type="button" class="secondary" data-insert="options">Beliebige Optionen</button>
+                <button type="button" class="secondary" data-insert="schoolName">Schulname</button>
                 <button type="button" class="secondary" data-insert="date">Datum</button>
                 <button type="button" class="secondary" data-insert="teacherName">Lehrername</button>
                 <button type="button" class="secondary" data-insert="teacherEmail">E-Mail</button>
                 <button type="button" class="secondary" data-insert="signature">Signatur</button>
-                <button type="button" class="secondary" data-insert="schoolName">Schulname</button>
               </div>
               <div class="placeholder-help">Felder werden im Text als interne Platzhalter gespeichert. Nutzerinnen und Nutzer müssen diese Syntax nicht selbst schreiben.</div>
             </div>
@@ -1734,8 +1734,25 @@
         return field.type;
       }
 
+      function renderSubjectFieldSelect(template) {
+        var allowedTypes = { text: true, options: true, setting: true, date: true };
+        var fieldIds = Object.keys(template.fields || {}).filter(function (fieldId) {
+          var field = template.fields[fieldId];
+          return field && allowedTypes[field.type];
+        });
+
+        var optionsHtml = fieldIds.map(function (fieldId) {
+          var field = template.fields[fieldId];
+          return '<option value="' + escapeHtml(field.id) + '">' + escapeHtml(field.label) + "</option>";
+        }).join("");
+
+        elements.templateSubjectFieldSelect.innerHTML = '<option value="">Feld in Betreff</option>' + optionsHtml;
+        elements.templateSubjectFieldSelect.value = "";
+      }
+
       function renderEditor(template) {
         elements.templateTitleInput.value = template.title;
+        renderSubjectFieldSelect(template);
         elements.templateSubjectInput.value = template.subject || "";
         elements.templateDescriptionInput.value = template.description || "";
         elements.templateBodyInput.value = template.body || "";
