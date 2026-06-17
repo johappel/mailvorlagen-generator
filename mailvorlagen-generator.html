@@ -64,6 +64,13 @@
       background: var(--accent-strong);
     }
 
+    .tab-button:hover,
+    .tab-button:focus-visible {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
     button:active {
       transform: translateY(1px);
     }
@@ -228,6 +235,23 @@
       gap: 8px;
     }
 
+    .field-header-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .field-header-row > .field-label {
+      margin-right: auto;
+    }
+
+    .field-inline-control {
+      min-width: 230px;
+      max-width: 100%;
+    }
+
     .field label,
     .field .field-label {
       font-weight: 650;
@@ -385,6 +409,12 @@
       font-size: 0.92rem;
     }
 
+    .field-note {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
     .inline-list {
       display: flex;
       flex-wrap: wrap;
@@ -496,7 +526,7 @@
   <div class="app-shell">
     <header class="hero">
       <h1>Mailvorlagen-Generator</h1>
-      <p>Diese Anwendung läuft lokal in Ihrem Browser. Eingegebene Daten werden nicht versendet und nicht an externe Server übertragen. Prüfen Sie Inhalt, Ton und schulrechtliche Angemessenheit der erzeugten Texte vor dem Versand über Ihr dienstliches E-Mail-Programm.</p>
+      <p>Diese Anwendung läuft lokal in Ihrem Browser. Eingegebene Daten werden nicht versendet und nicht an externe Server übertragen. Generierte E-Mails werden in den Zwischenablage kopiert und können im Schulportal eingefügt werden  .</p>
       <div class="tab-bar" role="tablist" aria-label="Bereiche">
         <button class="tab-button" type="button" role="tab" aria-selected="true" aria-controls="panel-compose" data-tab="compose">E-Mail erstellen</button>
         <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-templates" data-tab="templates">Vorlagen bearbeiten</button>
@@ -555,7 +585,12 @@
                 <input id="template-title-input" type="text">
               </div>
               <div class="field">
-                <label for="template-subject-input">Betreff</label>
+                <div class="field-header-row">
+                  <label for="template-subject-input" class="field-label">Betreff</label>
+                  <select id="template-subject-field-select" class="field-inline-control" aria-label="Feld in Betreff einfügen">
+                    <option value="">Feld in Betreff</option>
+                  </select>
+                </div>
                 <input id="template-subject-input" type="text">
               </div>
             </div>
@@ -564,14 +599,16 @@
               <input id="template-description-input" type="text">
             </div>
             <div class="field">
-              <span class="field-label">Bausteine einfügen</span>
+              <span class="field-label">Bausteine</span>
               <div class="toolbar">
-                <button type="button" class="secondary" data-insert="text">Textfeld einfügen</button>
-                <button type="button" class="secondary" data-insert="options">Optionen einfügen</button>
-                <button type="button" class="secondary" data-insert="date">Datum einfügen</button>
-                <button type="button" class="secondary" data-insert="teacherName">Lehrername einfügen</button>
-                <button type="button" class="secondary" data-insert="teacherEmail">E-Mail einfügen</button>
-                <button type="button" class="secondary" data-insert="signature">Signatur einfügen</button>
+                <button type="button" class="secondary" data-insert="text">Textfeld</button>
+                <button type="button" class="secondary" data-insert="studentName">Schülername</button>
+                <button type="button" class="secondary" data-insert="options">Optionen</button>
+                <button type="button" class="secondary" data-insert="date">Datum</button>
+                <button type="button" class="secondary" data-insert="teacherName">Lehrername</button>
+                <button type="button" class="secondary" data-insert="teacherEmail">E-Mail</button>
+                <button type="button" class="secondary" data-insert="signature">Signatur</button>
+                <button type="button" class="secondary" data-insert="schoolName">Schulname</button>
               </div>
               <div class="placeholder-help">Felder werden im Text als interne Platzhalter gespeichert. Nutzerinnen und Nutzer müssen diese Syntax nicht selbst schreiben.</div>
             </div>
@@ -622,6 +659,10 @@
               <div class="field">
                 <label for="teacher-email-input">E-Mail-Adresse</label>
                 <input id="teacher-email-input" name="teacherEmail" type="email" autocomplete="email">
+              </div>
+              <div class="field">
+                <label for="school-name-input">Name der Schule</label>
+                <input id="school-name-input" name="schoolName" type="text" autocomplete="organization">
               </div>
             </div>
             <div class="field">
@@ -764,12 +805,15 @@
 
       var STORAGE_KEY = "mailvorlagenGenerator.state.v1";
       var APP_VERSION = 1;
-      var SETTING_KEYS = ["teacherName", "teacherEmail", "signature"];
+      var SETTING_KEYS = ["teacherName", "teacherEmail", "signature", "schoolName"];
       var SETTING_FIELD_CONFIG = {
         teacherName: { id: "lehrername", label: "Lehrername" },
         teacherEmail: { id: "e-mail", label: "E-Mail" },
-        signature: { id: "signatur", label: "Signatur" }
+        signature: { id: "signatur", label: "Signatur" },
+        schoolName: { id: "schulname", label: "Schulname" }
       };
+      var CORE_STUDENT_FIELD_ID = "schueler-in";
+      var CORE_STUDENT_FIELD_LABEL = "Name der Schülerin / des Schülers";
 
       var appState = null;
       var uiState = {
@@ -802,6 +846,7 @@
         outputBody: document.getElementById("output-body"),
         templateEditorSelect: document.getElementById("template-editor-select"),
         templateTitleInput: document.getElementById("template-title-input"),
+        templateSubjectFieldSelect: document.getElementById("template-subject-field-select"),
         templateSubjectInput: document.getElementById("template-subject-input"),
         templateDescriptionInput: document.getElementById("template-description-input"),
         templateBodyInput: document.getElementById("template-body-input"),
@@ -818,6 +863,7 @@
         settingsForm: document.getElementById("settings-form"),
         teacherNameInput: document.getElementById("teacher-name-input"),
         teacherEmailInput: document.getElementById("teacher-email-input"),
+        schoolNameInput: document.getElementById("school-name-input"),
         signatureInput: document.getElementById("signature-input"),
         dateFormatSelect: document.getElementById("date-format-select"),
         saveTemplateButton: document.getElementById("save-template-button"),
@@ -890,47 +936,54 @@
       function createExampleTemplate() {
         var now = nowIso();
         return {
-          id: "template_absence_notice",
-          title: "Viele Fehltage wegen Krankheit",
-          subject: "Hinweis zu Fehlzeiten",
-          description: "Beispielvorlage für Hinweise an Eltern bei gehäuften Fehlzeiten.",
+          id: "template_praise_notice",
+          title: "Großes Lob",
+          subject: "Großes Lob für {{schueler-in}}",
+          description: "Eine positive Rückmeldung aus dem Unterricht an die Eltern.",
           body: [
-            "Sehr geehrte Eltern von {{name-der-schuelerin-des-schuelers-1}},",
+            "Sehr geehrte Eltern von {{schueler-in}},",
             "",
-            "ich möchte Sie hiermit darauf hinweisen, dass Ihr Kind in den vergangenen Monaten eine ungewöhnlich hohe Anzahl von Fehlzeiten zu verzeichnen hat. Dies äußert sich durch:",
+            "ich freue mich, Ihnen heute eine positive Rückmeldung aus dem Unterricht geben zu können.",
             "",
-            "{{auffaelligkeiten-1}}",
+            "Ihr Kind hat sich in letzter Zeit auf erfreuliche Weise in den Unterricht eingebracht. Besonders aufgefallen ist mir:",
             "",
-            "Ich möchte Sie darauf aufmerksam machen, dass häufige Fehlzeiten - unabhängig von der Ursache - sich nachteilig auf die Leistungsbewertung Ihres Kindes auswirken können.",
+            "{{lobpunkte-1}}",
             "",
-            "Als Eltern tragen Sie die Verantwortung für die Einhaltung der Schulpflicht sowie dafür, dass versäumte Inhalte eigenständig nachgeholt werden. Ich muss Sie daher dringend bitten, die Situation mit Ihrem Kind zu besprechen und künftig verlässlich auf eine regelmäßige Teilnahme am Unterricht und an den Leistungsnachweisen zu achten.",
+            "Solche Beiträge sind wertvoll - nicht nur für den eigenen Lernprozess, sondern auch für die gemeinsame Lernatmosphäre in der Klasse.",
             "",
-            "Sollten den gehäuften Fehlzeiten medizinische Gründe oder gesundheitliche Einschränkungen zugrunde liegen, bitte ich Sie, mir diese Information zeitnah zukommen zu lassen. Dies hilft uns, die Situation Ihres Kindes richtig einzuordnen.",
+            "Bitte richten Sie Ihrem Kind aus, dass dieses Engagement gesehen wurde und wirklich Freude gemacht hat. Vielleicht finden Sie zu Hause einen kleinen Moment, diesen Erfolg gemeinsam zu würdigen.",
             "",
-            "Bei Rückfragen kommen Sie gerne auf mich zu.",
+            "Mit freundlichen Grüßen",
             "",
             "{{signatur}}"
           ].join("\n"),
           fields: {
-            "name-der-schuelerin-des-schuelers-1": {
-              id: "name-der-schuelerin-des-schuelers-1",
+            "lobpunkte-1": {
+              id: "lobpunkte-1",
+              type: "options",
+              label: "Lobpunkte",
+              options: [
+                "hat durch gute Fragen den Unterricht bereichert",
+                "hat eigene Ideen eingebracht",
+                "hat ein tolles Referat gehalten",
+                "hat engagiert in der Gruppenarbeit mitgewirkt",
+                "hat Mitschüler:innen hilfsbereit beim Lernen unterstützt",
+                "hat eine gemeinsame Präsentation gut mitgestaltet",
+                "ist besonders achtsam mit Geräten und Materialien umgegangen",
+                "hat beim Aufräumen selbstverständlich mitgeholfen",
+                "hat sich sichtbar Mühe gegeben und Fortschritte gemacht",
+                "hat sich für eine gute Lernatmosphäre eingesetzt"
+              ],
+              display: "list",
+              hideUnchecked: true,
+              required: true
+            },
+            "schueler-in": {
+              id: "schueler-in",
               type: "text",
               label: "Name der Schülerin / des Schülers",
               rows: 1,
               required: true
-            },
-            "auffaelligkeiten-1": {
-              id: "auffaelligkeiten-1",
-              type: "options",
-              label: "Auffälligkeiten",
-              options: [
-                "gehäufte Krankheitstage",
-                "wiederholtes Unterbrechen des Unterrichts am Vormittag aufgrund von Erkrankungen",
-                "gehäuftes Fehlen an Prüfungstagen"
-              ],
-              display: "list",
-              hideUnchecked: true,
-              required: false
             },
             signatur: {
               id: "signatur",
@@ -944,12 +997,38 @@
         };
       }
 
+      function createCoreStudentField() {
+        return {
+          id: CORE_STUDENT_FIELD_ID,
+          type: "text",
+          label: CORE_STUDENT_FIELD_LABEL,
+          rows: 1,
+          required: true
+        };
+      }
+
+      function ensureCoreStudentField(template) {
+        if (!template.fields) {
+          template.fields = {};
+        }
+        if (!template.fields[CORE_STUDENT_FIELD_ID]) {
+          template.fields[CORE_STUDENT_FIELD_ID] = createCoreStudentField();
+        }
+      }
+
+      function isLegacyDefaultTemplate(template) {
+        return template &&
+          template.id === "template_absence_notice" &&
+          template.title === "Viele Fehltage wegen Krankheit";
+      }
+
       function getDefaultState() {
         return {
           version: APP_VERSION,
           settings: {
             teacherName: "",
             teacherEmail: "",
+            schoolName: "",
             signature: "",
             dateFormat: "dd.mm.yyyy"
           },
@@ -1042,6 +1121,7 @@
         });
 
         migrateReadableFieldIds(normalized);
+        ensureCoreStudentField(normalized);
 
         if (!Object.keys(normalized.fields).length) {
           issues.push("Die Vorlage \"" + normalized.title + "\" enthält keine gültigen Felder.");
@@ -1089,6 +1169,7 @@
         var normalizedSettings = {
           teacherName: typeof settings.teacherName === "string" ? settings.teacherName : "",
           teacherEmail: typeof settings.teacherEmail === "string" ? settings.teacherEmail : "",
+          schoolName: typeof settings.schoolName === "string" ? settings.schoolName : "",
           signature: typeof settings.signature === "string" ? settings.signature : "",
           dateFormat: settings.dateFormat === "yyyy-mm-dd" ? "yyyy-mm-dd" : "dd.mm.yyyy"
         };
@@ -1100,6 +1181,9 @@
         }
 
         var normalizedTemplates = templates.map(function (template, index) {
+          if (isLegacyDefaultTemplate(template)) {
+            return createExampleTemplate();
+          }
           return validateTemplate(template, index, issues);
         }).filter(Boolean);
 
@@ -1228,7 +1312,9 @@
           subject: "",
           description: "",
           body: "",
-          fields: {},
+          fields: {
+            "schueler-in": createCoreStudentField()
+          },
           createdAt: now,
           updatedAt: now
         };
@@ -2114,6 +2200,17 @@
         pushMessage("status", config.label + " wurde in die Vorlage eingefügt.");
       }
 
+      function insertCoreStudentField() {
+        updateEditorTemplateInMemory(function (template) {
+          ensureCoreStudentField(template);
+          insertAtSelection("{{" + CORE_STUDENT_FIELD_ID + "}}");
+          template.subject = elements.templateSubjectInput.value.replace(/\r\n/g, "\n");
+          template.body = elements.templateBodyInput.value.replace(/\r\n/g, "\n");
+        });
+        saveState(appState);
+        pushMessage("status", "Schülername wurde in die Vorlage eingefügt.");
+      }
+
       function removeFieldFromTemplate(fieldId) {
         var template = collectEditorTemplate();
         var field = template.fields[fieldId];
@@ -2254,38 +2351,91 @@
         pushMessage("status", "Die Vorlage \"" + template.title + "\" wurde als einzelne JSON-Datei exportiert.");
       }
 
+      function normalizeTitleForCompare(title) {
+        return String(title || "").trim().toLocaleLowerCase("de-DE");
+      }
+
+      function formatImportDateForTitle() {
+        var now = new Date();
+        var date = formatDate(now, "dd.mm.yyyy");
+        var hours = String(now.getHours()).padStart(2, "0");
+        var minutes = String(now.getMinutes()).padStart(2, "0");
+        return date + " " + hours + "." + minutes;
+      }
+
+      function createImportTitle(baseTitle, templates) {
+        var importTitle = (baseTitle || "Importierte Vorlage") + " (Import " + formatImportDateForTitle() + ")";
+        var candidate = importTitle;
+        var counter = 2;
+        var usedTitles = templates.map(function (template) {
+          return normalizeTitleForCompare(template.title);
+        });
+        while (usedTitles.indexOf(normalizeTitleForCompare(candidate)) >= 0) {
+          candidate = importTitle + " " + counter;
+          counter += 1;
+        }
+        return candidate;
+      }
+
+      function ensureUniqueTemplateId(template, templates) {
+        var usedIds = {};
+        templates.forEach(function (item) {
+          usedIds[item.id] = true;
+        });
+        if (!usedIds[template.id]) {
+          return;
+        }
+        do {
+          template.id = createId("template");
+        } while (usedIds[template.id]);
+      }
+
       function mergeImportedTemplates(existingTemplates, importedTemplates) {
-        var existingIds = {};
-        existingTemplates.forEach(function (template) {
-          existingIds[template.id] = true;
+        var mergedTemplates = existingTemplates.slice();
+        var selectedTemplateId = mergedTemplates[0] ? mergedTemplates[0].id : "";
+
+        importedTemplates.forEach(function (template) {
+          var clone = JSON.parse(JSON.stringify(template));
+          ensureCoreStudentField(clone);
+
+          var titleIndex = mergedTemplates.findIndex(function (existingTemplate) {
+            return normalizeTitleForCompare(existingTemplate.title) === normalizeTitleForCompare(clone.title);
+          });
+
+          if (titleIndex >= 0) {
+            var existingTemplate = mergedTemplates[titleIndex];
+            var overwrite = window.confirm(
+              "Eine Vorlage mit der Bezeichnung \"" + clone.title + "\" ist bereits vorhanden.\n\n" +
+              "OK: vorhandene Vorlage überschreiben\n" +
+              "Abbrechen: Import als neue Vorlage mit Import-Datum anlegen"
+            );
+
+            if (overwrite) {
+              clone.id = existingTemplate.id;
+              clone.title = existingTemplate.title;
+              clone.createdAt = existingTemplate.createdAt;
+              clone.updatedAt = nowIso();
+              mergedTemplates[titleIndex] = clone;
+              selectedTemplateId = clone.id;
+              return;
+            }
+
+            clone.title = createImportTitle(clone.title, mergedTemplates);
+            clone.id = createId("template");
+            ensureUniqueTemplateId(clone, mergedTemplates);
+          } else {
+            ensureUniqueTemplateId(clone, mergedTemplates);
+          }
+
+          clone.updatedAt = nowIso();
+          mergedTemplates.push(clone);
+          selectedTemplateId = clone.id;
         });
 
-        return importedTemplates.map(function (template) {
-          if (!existingIds[template.id]) {
-            existingIds[template.id] = true;
-            return template;
-          }
-          var clone = JSON.parse(JSON.stringify(template));
-          clone.id = createId("template");
-          var remappedFields = {};
-          var fieldIdMap = {};
-          Object.keys(clone.fields).forEach(function (fieldId) {
-            var newFieldId = createReadableFieldId(clone.fields[fieldId].label || fieldId, Object.assign({}, existingIds, remappedFields));
-            fieldIdMap[fieldId] = newFieldId;
-          });
-          Object.keys(clone.fields).forEach(function (fieldId) {
-            var field = clone.fields[fieldId];
-            field.id = fieldIdMap[fieldId];
-            remappedFields[field.id] = field;
-          });
-          clone.fields = remappedFields;
-          Object.keys(fieldIdMap).forEach(function (oldFieldId) {
-            var pattern = new RegExp("\\{\\{" + escapeRegExp(oldFieldId) + "\\}\\}", "g");
-            clone.body = clone.body.replace(pattern, "{{" + fieldIdMap[oldFieldId] + "}}");
-            clone.subject = (clone.subject || "").replace(pattern, "{{" + fieldIdMap[oldFieldId] + "}}");
-          });
-          return clone;
-        });
+        return {
+          templates: mergedTemplates,
+          selectedTemplateId: selectedTemplateId
+        };
       }
 
       function importSingleTemplate(parsed) {
@@ -2295,9 +2445,10 @@
           throw new Error("invalid-template");
         }
 
-        appState.templates = appState.templates.concat(mergeImportedTemplates(appState.templates, [template]));
+        var merged = mergeImportedTemplates(appState.templates, [template]);
+        appState.templates = merged.templates;
         saveState(appState);
-        syncTemplateSelection(template.id);
+        syncTemplateSelection(merged.selectedTemplateId);
         setMessages([{ type: "status", text: "Die Vorlage wurde importiert." }].concat(issues.map(function (item) {
           return { type: "warning-box", text: item };
         })));
@@ -2336,11 +2487,11 @@
               return;
             }
 
-            var mergedTemplates = appState.templates.concat(mergeImportedTemplates(appState.templates, importedState.templates));
-            appState.templates = mergedTemplates;
+            var merged = mergeImportedTemplates(appState.templates, importedState.templates);
+            appState.templates = merged.templates;
             appState.settings = importedState.settings;
             saveState(appState);
-            syncTemplateSelection(uiState.editorTemplateId || appState.templates[0].id);
+            syncTemplateSelection(merged.selectedTemplateId || uiState.editorTemplateId || appState.templates[0].id);
             setMessages([{ type: "status", text: "Die importierten Vorlagen wurden hinzugefügt. Einstellungen wurden übernommen." }].concat(validated.issues.map(function (item) {
               return { type: "warning-box", text: item };
             })));
@@ -2372,6 +2523,10 @@
         saveEditorSelection();
         if (action === "text") {
           openTextFieldDialog(null);
+          return;
+        }
+        if (action === "studentName") {
+          insertCoreStudentField();
           return;
         }
         if (action === "options") {
