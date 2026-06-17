@@ -611,7 +611,7 @@
               <div class="toolbar">
                 <button type="button" class="secondary" data-insert="studentName">Schüler(in)name</button>
                 <button type="button" class="secondary" data-insert="text">Beliebiges Textfeld</button>
-                <button type="button" class="secondary" data-insert="options">Beliebige Optionen</button>
+                <button type="button" class="secondary" data-insert="options">Eigene Auswahl-Texte</button>
                 <button type="button" class="secondary" data-insert="schoolName">Schulname</button>
                 <button type="button" class="secondary" data-insert="date">Datum</button>
                 <button type="button" class="secondary" data-insert="teacherName">Lehrername</button>
@@ -746,13 +746,13 @@
 
   <dialog id="options-field-dialog">
     <form method="dialog" class="dialog-shell" id="options-field-form">
-      <h3 id="options-field-dialog-title">Optionen einfügen</h3>
+      <h3 id="options-field-dialog-title">Auswahl-Texte einfügen</h3>
       <div class="field">
         <label for="options-field-label-input">Bezeichnung</label>
         <input id="options-field-label-input" type="text" required>
       </div>
       <div class="field">
-        <label for="options-field-options-input">Optionen, eine pro Zeile</label>
+        <label for="options-field-options-input">Auswahl-Texte, ein Text pro Zeile</label>
         <textarea id="options-field-options-input" rows="8"></textarea>
       </div>
       <div class="grid">
@@ -1410,6 +1410,9 @@
             if (field.settingKey === "teacherEmail") {
               return "alex.beispiel@schule.invalid";
             }
+            if (field.settingKey === "schoolName") {
+              return "Beispielschule";
+            }
             if (field.settingKey === "signature") {
               return "Mit freundlichen Grüßen\nAlex Beispiel";
             }
@@ -1898,6 +1901,7 @@
       function renderSettingsForm() {
         elements.teacherNameInput.value = appState.settings.teacherName;
         elements.teacherEmailInput.value = appState.settings.teacherEmail;
+        elements.schoolNameInput.value = appState.settings.schoolName;
         elements.signatureInput.value = appState.settings.signature;
         elements.dateFormatSelect.value = appState.settings.dateFormat;
       }
@@ -2014,6 +2018,7 @@
         event.preventDefault();
         appState.settings.teacherName = elements.teacherNameInput.value.trim();
         appState.settings.teacherEmail = elements.teacherEmailInput.value.trim();
+        appState.settings.schoolName = elements.schoolNameInput.value.trim();
         appState.settings.signature = elements.signatureInput.value.replace(/\r\n/g, "\n").trim();
         appState.settings.dateFormat = elements.dateFormatSelect.value === "yyyy-mm-dd" ? "yyyy-mm-dd" : "dd.mm.yyyy";
         saveState(appState);
@@ -2117,12 +2122,11 @@
         uiState.activeDialogFieldId = fieldId || null;
         var template = collectEditorTemplate();
         var field = fieldId ? template.fields[fieldId] : null;
-        elements.optionsFieldDialogTitle.textContent = field ? "Optionen bearbeiten" : "Optionen einfügen";
+        elements.optionsFieldDialogTitle.textContent = field ? "Auswahl-Texte bearbeiten" : "Auswahl-Texte einfügen";
         elements.optionsFieldLabelInput.value = field ? field.label : "Auswahl";
         elements.optionsFieldOptionsInput.value = field ? field.options.join("\n") : [
-          "gehäufte Krankheitstage",
-          "wiederholtes Unterbrechen des Unterrichts am Vormittag aufgrund von Erkrankungen",
-          "gehäuftes Fehlen an Prüfungstagen"
+          "hat durch gute Fragen den Unterricht bereichert",
+          "hat eigene Ideen eingebracht"
         ].join("\n");
         elements.optionsFieldDisplaySelect.value = field ? field.display : "list";
         elements.optionsFieldHideUncheckedInput.checked = field ? field.hideUnchecked !== false : true;
