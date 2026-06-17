@@ -216,6 +216,11 @@
       display: grid;
       gap: 18px;
       grid-template-columns: minmax(320px, 1.1fr) minmax(320px, 0.9fr);
+      align-items: start;
+    }
+
+    .two-columns > .stack {
+      align-content: start;
     }
 
     .field {
@@ -226,6 +231,23 @@
     .field label,
     .field .field-label {
       font-weight: 650;
+    }
+
+    .lead-select {
+      border: 2px solid rgba(15, 95, 125, 0.34);
+      background: linear-gradient(180deg, #ffffff 0%, #f3f8fb 100%);
+      box-shadow: 0 0 0 5px rgba(15, 95, 125, 0.08);
+    }
+
+    .lead-select-label {
+      color: var(--accent-strong);
+      font-size: 1.02rem;
+    }
+
+    .lead-select-hint {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
     }
 
     .toolbar {
@@ -490,8 +512,9 @@
         <div class="stack">
           <!-- <div class="note">Hinweis: Die erzeugten Texte sind Formulierungshilfen. Bitte prüfen Sie Inhalt, Ton und schulrechtliche Angemessenheit vor dem Versand.</div> -->
           <div class="field">
-            <label for="compose-template-select">Vorlage auswählen</label>
-            <select id="compose-template-select"></select>
+            <label for="compose-template-select" class="lead-select-label">Vorlage auswählen</label>
+            <select id="compose-template-select" class="lead-select"></select>
+            <div class="lead-select-hint">Wählen Sie zuerst die passende Vorlage aus.</div>
           </div>
           <div id="compose-form-area" class="stack"></div>
           <div class="actions">
@@ -522,8 +545,9 @@
               </div>
             </div>
             <div class="field">
-              <label for="template-editor-select">Vorlage auswählen</label>
-              <select id="template-editor-select"></select>
+              <label for="template-editor-select" class="lead-select-label">Vorlage auswählen</label>
+              <select id="template-editor-select" class="lead-select"></select>
+              <div class="lead-select-hint">Zuletzt bearbeitete Vorlagen stehen oben.</div>
             </div>
             <div class="grid">
               <div class="field">
@@ -622,8 +646,14 @@
         <div class="stack">
           <h2>Import/Export</h2>
           <div class="note">Die gespeicherten Vorlagen liegen nur in diesem Browser auf diesem Gerät. Nutzen Sie den Export, um Ihre Vorlagen zu sichern oder auf einen anderen Rechner zu übertragen.</div>
+          <div class="field">
+            <label for="transfer-template-select" class="lead-select-label">Einzelne Vorlage auswählen</label>
+            <select id="transfer-template-select" class="lead-select"></select>
+            <div class="lead-select-hint">Diese Auswahl wird für den Export einer einzelnen Vorlage verwendet.</div>
+          </div>
           <div class="actions">
             <button type="button" id="export-data-button">Daten exportieren</button>
+            <button type="button" id="export-template-button" class="secondary">Vorlage exportieren</button>
             <button type="button" id="reset-data-button" class="secondary">Auf Beispielvorlage zurücksetzen</button>
           </div>
           <div class="field">
@@ -792,8 +822,10 @@
         dateFormatSelect: document.getElementById("date-format-select"),
         saveTemplateButton: document.getElementById("save-template-button"),
         exportDataButton: document.getElementById("export-data-button"),
+        exportTemplateButton: document.getElementById("export-template-button"),
         importFileInput: document.getElementById("import-file-input"),
         resetDataButton: document.getElementById("reset-data-button"),
+        transferTemplateSelect: document.getElementById("transfer-template-select"),
         transferInfo: document.getElementById("transfer-info"),
         dialogs: {
           text: document.getElementById("text-field-dialog"),
@@ -1441,14 +1473,28 @@
         });
       }
 
+      function getTemplatesSortedByRecent() {
+        return appState.templates.slice().sort(function (left, right) {
+          var leftTime = Date.parse(left.updatedAt || "") || 0;
+          var rightTime = Date.parse(right.updatedAt || "") || 0;
+          if (rightTime !== leftTime) {
+            return rightTime - leftTime;
+          }
+          return String(left.title || "").localeCompare(String(right.title || ""), "de");
+        });
+      }
+
       function renderTemplateSelects() {
-        var options = appState.templates.map(function (template) {
+        var sortedTemplates = getTemplatesSortedByRecent();
+        var options = sortedTemplates.map(function (template) {
           return '<option value="' + escapeHtml(template.id) + '">' + escapeHtml(template.title) + "</option>";
         }).join("");
         elements.composeTemplateSelect.innerHTML = options;
         elements.templateEditorSelect.innerHTML = options;
+        elements.transferTemplateSelect.innerHTML = options;
         elements.composeTemplateSelect.value = uiState.composeTemplateId;
         elements.templateEditorSelect.value = uiState.editorTemplateId;
+        elements.transferTemplateSelect.value = uiState.editorTemplateId || sortedTemplates[0].id;
       }
 
       function renderComposeForm(template) {
@@ -1707,7 +1753,10 @@
       }
 
       function renderTransferInfo() {
-        elements.transferInfo.innerHTML = '<div class="note">Gespeicherte Vorlagen: ' + appState.templates.length + "</div>";
+        var template = getTransferTemplate();
+        elements.transferInfo.innerHTML =
+          '<div class="note">Gespeicherte Vorlagen: ' + appState.templates.length + "</div>" +
+          '<div class="note">Ausgewählte Vorlage für Einzel-Export: ' + escapeHtml(template.title) + "</div>";
       }
 
       function renderAll() {
@@ -2178,6 +2227,10 @@
         URL.revokeObjectURL(url);
       }
 
+      function getTransferTemplate() {
+        return getTemplateById(elements.transferTemplateSelect.value || uiState.editorTemplateId || appState.templates[0].id);
+      }
+
       function exportState() {
         var exportPayload = {
           version: APP_VERSION,
@@ -2187,6 +2240,18 @@
         };
         downloadTextFile("mailvorlagen-generator-backup.json", JSON.stringify(exportPayload, null, 2));
         pushMessage("status", "Die Daten wurden als JSON-Datei exportiert.");
+      }
+
+      function exportSingleTemplate() {
+        var template = getTransferTemplate();
+        var exportPayload = {
+          version: APP_VERSION,
+          exportType: "template",
+          exportedAt: nowIso(),
+          template: template
+        };
+        downloadTextFile("mailvorlage-" + slugify(template.title || "vorlage") + ".json", JSON.stringify(exportPayload, null, 2));
+        pushMessage("status", "Die Vorlage \"" + template.title + "\" wurde als einzelne JSON-Datei exportiert.");
       }
 
       function mergeImportedTemplates(existingTemplates, importedTemplates) {
@@ -2223,6 +2288,22 @@
         });
       }
 
+      function importSingleTemplate(parsed) {
+        var issues = [];
+        var template = validateTemplate(parsed.template, 0, issues);
+        if (!template) {
+          throw new Error("invalid-template");
+        }
+
+        appState.templates = appState.templates.concat(mergeImportedTemplates(appState.templates, [template]));
+        saveState(appState);
+        syncTemplateSelection(template.id);
+        setMessages([{ type: "status", text: "Die Vorlage wurde importiert." }].concat(issues.map(function (item) {
+          return { type: "warning-box", text: item };
+        })));
+        renderAll();
+      }
+
       function importStateFromFile(file) {
         var reader = new FileReader();
         reader.onload = function () {
@@ -2230,6 +2311,10 @@
             var parsed = JSON.parse(String(reader.result || ""));
             if (!parsed || typeof parsed !== "object") {
               throw new Error("invalid");
+            }
+            if (parsed.exportType === "template" && parsed.template) {
+              importSingleTemplate(parsed);
+              return;
             }
             if (parsed.version !== APP_VERSION) {
               pushMessage("warning-box", "Die Datei hat eine andere Version. Der Import wurde nicht übernommen.");
@@ -2334,7 +2419,9 @@
         elements.previewTemplateButton.addEventListener("click", runPreview);
         elements.saveTemplateButton.addEventListener("click", saveCurrentTemplate);
         elements.exportDataButton.addEventListener("click", exportState);
+        elements.exportTemplateButton.addEventListener("click", exportSingleTemplate);
         elements.resetDataButton.addEventListener("click", resetToDefaults);
+        elements.transferTemplateSelect.addEventListener("change", renderTransferInfo);
 
         elements.importFileInput.addEventListener("change", function (event) {
           var file = event.target.files && event.target.files[0];
