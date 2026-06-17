@@ -31,7 +31,7 @@ Es ist kein Build-Schritt, kein Server und keine Installation nötig.
 
 ## Quickstart
 
-Für später gehört hier noch eine ausführlichere Anleitung zur Inbetriebnahme hinein. Zum schnellen Testen reicht dieser Ablauf:
+Die ausführliche Anleitung steht im [Handbuch.md](Handbuch.md). Zum schnellen Testen reicht dieser Ablauf:
 
 1. `Vorlagen bearbeiten` öffnen und `Neue Vorlage` anklicken.
 2. Als Vorlagenname `Unerlaubt Unterricht verlassen` eintragen, als Betreff `Verweis für unerlaubtes Verlassen des Unterrichts` und als Beschreibung `Benachrichtigung der Eltern, dass ein Schüler unerlaubt den Unterricht verlassen hat`.
