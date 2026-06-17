@@ -292,7 +292,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      max-height: 40px;
+      align-items: flex-start;
     }
 
     .toolbar button,
@@ -1393,7 +1393,7 @@
           subject: elements.templateSubjectInput.value.trim(),
           description: elements.templateDescriptionInput.value.trim(),
           body: elements.templateBodyInput.value.replace(/\r\n/g, "\n"),
-          fields: cloneFields(currentTemplate.fields),
+          fields: normalizeFieldMap(cloneFields(currentTemplate.fields)),
           createdAt: currentTemplate.createdAt,
           updatedAt: nowIso()
         };
@@ -1401,6 +1401,20 @@
 
       function cloneFields(fields) {
         return JSON.parse(JSON.stringify(fields || {}));
+      }
+
+      function normalizeFieldMap(fields) {
+        var normalized = {};
+        Object.keys(fields || {}).forEach(function (fieldKey) {
+          var field = fields[fieldKey];
+          if (!field || typeof field !== "object") {
+            return;
+          }
+          var normalizedId = typeof field.id === "string" && field.id.trim() ? field.id.trim() : fieldKey;
+          field.id = normalizedId;
+          normalized[normalizedId] = field;
+        });
+        return normalized;
       }
 
       function buildDefaultValueForField(field, settings, mode) {
@@ -1874,7 +1888,7 @@
               editButton.className = "secondary";
               editButton.textContent = "Bearbeiten";
               editButton.addEventListener("click", function () {
-                openFieldDialogForEdit(field.id);
+                openFieldDialogForEdit(fieldId);
               });
               buttonGroup.appendChild(editButton);
             }
@@ -1884,7 +1898,7 @@
             removeButton.className = "ghost";
             removeButton.textContent = "Entfernen";
             removeButton.addEventListener("click", function () {
-              removeFieldFromTemplate(field.id);
+              removeFieldFromTemplate(fieldId);
             });
             buttonGroup.appendChild(removeButton);
 
@@ -1894,7 +1908,7 @@
 
             var placeholderChip = document.createElement("div");
             placeholderChip.className = "inline-list";
-            placeholderChip.innerHTML = '<span class="chip">' + escapeHtml("{{" + field.id + "}}") + "</span>";
+            placeholderChip.innerHTML = '<span class="chip">' + escapeHtml("{{" + fieldId + "}}") + "</span>";
             card.appendChild(placeholderChip);
 
             elements.templateFieldList.appendChild(card);
@@ -2346,18 +2360,35 @@
         var template = collectEditorTemplate();
         var field = template.fields[fieldId];
         if (!field) {
+          var matchingKey = Object.keys(template.fields).find(function (key) {
+            var candidate = template.fields[key];
+            return candidate && candidate.id === fieldId;
+          });
+          if (matchingKey) {
+            fieldId = matchingKey;
+            field = template.fields[fieldId];
+          }
+        }
+        if (!field) {
+          pushMessage("error-box", "Das Feld konnte nicht entfernt werden, weil es intern nicht mehr eindeutig zugeordnet werden konnte.");
           return;
         }
 
-        var removePlaceholder = window.confirm("Soll der Platzhalter dieses Feldes auch aus dem Vorlagentext entfernt werden?");
+        var confirmed = window.confirm("Soll dieses Feld wirklich entfernt werden? Der zugehörige Platzhalter wird dabei ebenfalls aus dem Vorlagentext gelöscht.");
+        if (!confirmed) {
+          pushMessage("status", "Das Feld wurde nicht entfernt.");
+          return;
+        }
+
         delete template.fields[fieldId];
 
-        if (removePlaceholder) {
-          var pattern = new RegExp("\\{\\{" + escapeRegExp(fieldId) + "\\}\\}\\n?", "g");
+        var placeholderIds = dedupe([fieldId, field.id].filter(Boolean));
+        placeholderIds.forEach(function (placeholderId) {
+          var pattern = new RegExp("\\{\\{" + escapeRegExp(placeholderId) + "\\}\\}\\n?", "g");
           template.subject = (template.subject || "").replace(pattern, "");
           template.body = template.body.replace(pattern, "");
-          template.body = template.body.replace(/\n{3,}/g, "\n\n");
-        }
+        });
+        template.body = template.body.replace(/\n{3,}/g, "\n\n");
 
         template.updatedAt = nowIso();
         var index = appState.templates.findIndex(function (item) {
