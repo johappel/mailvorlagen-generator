@@ -700,13 +700,15 @@
             <select id="transfer-template-select" class="lead-select"></select>
             <div class="lead-select-hint">Diese Auswahl wird für den Export einer einzelnen Vorlage verwendet.</div>
           </div>
-          <div class="actions">
-            <button type="button" id="export-data-button">Daten exportieren</button>
-            <button type="button" id="export-template-button" class="secondary">Vorlage exportieren</button>
-            <button type="button" id="reset-data-button" class="secondary">Auf Beispielvorlage zurücksetzen</button>
+          <div class="actions transfer-actions">
+            <button type="button" id="export-template-button">Vorlage exportieren</button>
+          </div>
+          <div class="actions transfer-actions">
+            <button type="button" id="export-data-button">Alle Daten exportieren (Backup)</button>
+            <button type="button" id="delete-data-button" class="secondary">Alle Daten löschen</button>
           </div>
           <div class="field">
-            <label for="import-file-input">Daten importieren</label>
+            <label for="import-file-input">Daten wiederherstellen oder Vorlage importieren</label>
             <input id="import-file-input" class="file-input" type="file" accept=".json,application/json">
           </div>
           <div class="warning-box">Sicherheits- und Reputationshinweis: Exportdateien können personenbezogene oder sensible schulische Formulierungen enthalten. Prüfen Sie vor Weitergabe, ob das wirklich erforderlich und zulässig ist.</div>
@@ -878,7 +880,7 @@
         exportDataButton: document.getElementById("export-data-button"),
         exportTemplateButton: document.getElementById("export-template-button"),
         importFileInput: document.getElementById("import-file-input"),
-        resetDataButton: document.getElementById("reset-data-button"),
+        deleteDataButton: document.getElementById("delete-data-button"),
         transferTemplateSelect: document.getElementById("transfer-template-select"),
         transferInfo: document.getElementById("transfer-info"),
         dialogs: {
@@ -2537,13 +2539,16 @@
         reader.readAsText(file, "utf-8");
       }
 
-      function resetToDefaults() {
-        var confirmed = window.confirm("Sollen alle gespeicherten Vorlagen und Einstellungen auf den Ausgangszustand zurückgesetzt werden?");
+      function deleteAllData() {
+        var confirmed = window.confirm("Sollen alle gespeicherten Vorlagen und Einstellungen gelöscht werden?");
         if (!confirmed) {
           return;
         }
-        resetState();
-        pushMessage("status", "Die App wurde auf die Beispielvorlage zurückgesetzt.");
+        window.localStorage.removeItem(STORAGE_KEY);
+        appState = getDefaultState();
+        saveState(appState);
+        syncTemplateSelection(appState.templates[0].id, true);
+        pushMessage("status", "Alle lokalen Daten wurden gelöscht.");
         renderAll();
       }
 
@@ -2635,7 +2640,7 @@
         elements.saveTemplateButton.addEventListener("click", saveCurrentTemplate);
         elements.exportDataButton.addEventListener("click", exportState);
         elements.exportTemplateButton.addEventListener("click", exportSingleTemplate);
-        elements.resetDataButton.addEventListener("click", resetToDefaults);
+        elements.deleteDataButton.addEventListener("click", deleteAllData);
         elements.transferTemplateSelect.addEventListener("change", renderTransferInfo);
         elements.templateSubjectFieldSelect.addEventListener("change", function (event) {
           appendFieldToSubject(event.target.value);
