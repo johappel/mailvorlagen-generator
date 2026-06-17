@@ -539,8 +539,7 @@
     <header class="hero">
       <h1>Mailvorlagen-Generator</h1>
       <p>Eingegebene Daten werden nicht versendet und nicht an externe Server übertragen. Generierte E-Mails werden in den Zwischenablage kopiert und können im Schulportal eingefügt werden.  Inhalt, Ton und schulrechtliche Angemessenheit der erzeugten Texte vor dem Versand prüfen!<br>
-      Alternativ: <a href="./mailvorlagen-generator.html" target="_blank" rel="noopener">App herunterladen und im Browser öffnen
-</a></p>
+      Offline: App <a href="./mailvorlagen-generator.html" target="_blank" rel="noopener">herunterladen</a> und im Browser öffnen</p>
       <div class="tab-bar" role="tablist" aria-label="Bereiche">
         <button class="tab-button" type="button" role="tab" aria-selected="true" aria-controls="panel-compose" data-tab="compose">E-Mail erstellen</button>
         <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-templates" data-tab="templates">Vorlagen bearbeiten</button>
@@ -1214,9 +1213,6 @@
         }
 
         var normalizedTemplates = templates.map(function (template, index) {
-          if (isLegacyDefaultTemplate(template)) {
-            return createExampleTemplate();
-          }
           return validateTemplate(template, index, issues);
         }).filter(Boolean);
 
@@ -1688,6 +1684,7 @@
       function renderComposeForm(template) {
         var container = elements.composeFormArea;
         container.innerHTML = "";
+        var visibleFieldCount = 0;
 
         var heading = document.createElement("h2");
         heading.textContent = "Eingabefelder zur Vorlage";
@@ -1704,15 +1701,16 @@
           var field = template.fields[fieldId];
 
           if (field.type === "setting") {
-            var info = document.createElement("div");
-            info.className = "note";
-            info.textContent = field.label + " wird aus den Einstellungen eingefügt.";
-            container.appendChild(info);
+            return;
+          }
+
+          if (field.type === "date" && field.mode !== "manual") {
             return;
           }
 
           var wrapper = document.createElement("div");
           wrapper.className = "field";
+          visibleFieldCount += 1;
 
           var label = document.createElement("label");
           label.className = "field-label";
@@ -1785,27 +1783,26 @@
 
             wrapper.appendChild(checkboxGroup);
           }
-
           if (field.type === "date") {
-            if (field.mode === "manual") {
-              var dateInput = document.createElement("input");
-              dateInput.id = "compose-field-" + field.id;
-              dateInput.type = "date";
-              dateInput.value = uiState.formValues[field.id] || "";
-              dateInput.addEventListener("input", function (event) {
-                uiState.formValues[field.id] = event.target.value;
-              });
-              wrapper.appendChild(dateInput);
-            } else {
-              var dateNote = document.createElement("div");
-              dateNote.className = "note";
-              dateNote.textContent = field.mode === "specific" ? "Dieses Datum ist in der Vorlage festgelegt." : "Das heutige Datum wird automatisch eingefügt.";
-              wrapper.appendChild(dateNote);
-            }
+            var dateInput = document.createElement("input");
+            dateInput.id = "compose-field-" + field.id;
+            dateInput.type = "date";
+            dateInput.value = uiState.formValues[field.id] || "";
+            dateInput.addEventListener("input", function (event) {
+              uiState.formValues[field.id] = event.target.value;
+            });
+            wrapper.appendChild(dateInput);
           }
 
           container.appendChild(wrapper);
         });
+
+        if (!visibleFieldCount) {
+          var emptyNote = document.createElement("div");
+          emptyNote.className = "note";
+          emptyNote.textContent = "Für diese Vorlage müssen hier keine Felder ausgefüllt werden.";
+          container.appendChild(emptyNote);
+        }
       }
 
       function renderComposeWarnings(warnings) {
