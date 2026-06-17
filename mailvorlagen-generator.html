@@ -219,14 +219,22 @@
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     }
 
+    .template-head-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: minmax(193px, 1fr) minmax(327px, 1.6fr) 67px;
+      align-items: end;
+    }
+
     .two-columns {
       display: grid;
       gap: 18px;
-      grid-template-columns: minmax(320px, 1.1fr) minmax(320px, 0.9fr);
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
       align-items: start;
     }
 
     .two-columns > .stack {
+      min-width: 0;
       align-content: start;
     }
 
@@ -235,21 +243,12 @@
       gap: 8px;
     }
 
-    .field-header-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .field-header-row > .field-label {
-      margin-right: auto;
-    }
-
-    .field-inline-control {
-      min-width: 230px;
-      max-width: 100%;
+    .subject-insert-select {
+      width: 72px;
+      min-width: 72px;
+      padding-left: 0.45rem;
+      padding-right: 0.45rem;
+      text-align: center;
     }
 
     .field label,
@@ -516,6 +515,14 @@
         width: 100%;
       }
 
+      .template-head-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .subject-insert-select {
+        width: 100%;
+      }
+
       .field-card-header {
         flex-direction: column;
       }
@@ -526,7 +533,7 @@
   <div class="app-shell">
     <header class="hero">
       <h1>Mailvorlagen-Generator</h1>
-      <p>Diese Anwendung läuft lokal in Ihrem Browser. Eingegebene Daten werden nicht versendet und nicht an externe Server übertragen. Generierte E-Mails werden in den Zwischenablage kopiert und können im Schulportal eingefügt werden  .</p>
+      <p>Eingegebene Daten werden nicht versendet und nicht an externe Server übertragen. Generierte E-Mails werden in den Zwischenablage kopiert und können im Schulportal eingefügt werden.  Inhalt, Ton und schulrechtliche Angemessenheit der erzeugten Texte vor dem Versand prüfen!</p>
       <div class="tab-bar" role="tablist" aria-label="Bereiche">
         <button class="tab-button" type="button" role="tab" aria-selected="true" aria-controls="panel-compose" data-tab="compose">E-Mail erstellen</button>
         <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-templates" data-tab="templates">Vorlagen bearbeiten</button>
@@ -579,19 +586,20 @@
               <select id="template-editor-select" class="lead-select"></select>
               <div class="lead-select-hint">Zuletzt bearbeitete Vorlagen stehen oben.</div>
             </div>
-            <div class="grid">
+            <div class="template-head-grid">
               <div class="field">
                 <label for="template-title-input">Vorlagenname</label>
                 <input id="template-title-input" type="text">
               </div>
               <div class="field">
-                <div class="field-header-row">
-                  <label for="template-subject-input" class="field-label">Betreff</label>
-                  <select id="template-subject-field-select" class="field-inline-control" aria-label="Feld in Betreff einfügen">
-                    <option value="">Feld in Betreff</option>
-                  </select>
-                </div>
+                <label for="template-subject-input">Betreff</label>
                 <input id="template-subject-input" type="text">
+              </div>
+              <div class="field">
+                <label class="visually-hidden" for="template-subject-field-select">Feld in Betreff einfügen</label>
+                <select id="template-subject-field-select" class="subject-insert-select" aria-label="Feld in Betreff einfügen">
+                  <option value="">{}</option>
+                </select>
               </div>
             </div>
             <div class="field">
@@ -1746,7 +1754,7 @@
           return '<option value="' + escapeHtml(field.id) + '">' + escapeHtml(field.label) + "</option>";
         }).join("");
 
-        elements.templateSubjectFieldSelect.innerHTML = '<option value="">Feld in Betreff</option>' + optionsHtml;
+        elements.templateSubjectFieldSelect.innerHTML = '<option value="">{}</option>' + optionsHtml;
         elements.templateSubjectFieldSelect.value = "";
       }
 
@@ -1917,6 +1925,9 @@
         uiState.lastGenerated = result;
         renderComposeWarnings(result.warnings);
         renderOutput(result);
+        if (!result.warnings.length) {
+          copyGeneratedText();
+        }
       }
 
       function copyGeneratedText() {
