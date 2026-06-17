@@ -11,22 +11,32 @@ Die Anwendung läuft als einzelne HTML-Datei im Browser und ist für Windows-Sch
 - Dynamische Formulare aus Vorlagen erzeugen
 - E-Mail-Texte ausfüllen, generieren und kopieren
 - Vorschau mit Beispieldaten
-- Lokale Einstellungen für Lehrername, E-Mail, Signatur und Datumsformat
+- Lokale Einstellungen für Lehrername, Schulname, E-Mail, Signatur und Datumsformat
 - Export und Import der kompletten Daten als JSON
-- Beispielvorlage für Fehlzeiten direkt beim ersten Start
+- Einzelne Vorlagen als JSON teilen
 
 ## Dateien
 
 - `mailvorlagen-generator.html` - die eigentliche Anwendung
+- `index.html` - Einstieg für GitHub Pages
 - `README.md` - diese Dokumentation
 
 ## Direkt starten
 
 1. `mailvorlagen-generator.html` im Datei-Explorer doppelklicken.
 2. Die App öffnet sich im Browser.
-3. Beispielvorlage auswählen und direkt loslegen.
+3. Eine vorhandene Vorlage auswählen oder direkt eine neue anlegen.
 
 Es ist kein Build-Schritt, kein Server und keine Installation nötig.
+
+## Quickstart
+
+Für später gehört hier noch eine ausführlichere Anleitung zur Inbetriebnahme hinein. Zum schnellen Testen reicht dieser Ablauf:
+
+1. `Vorlagen bearbeiten` öffnen und `Neue Vorlage` anklicken.
+2. Als Vorlagenname `Unerlaubt Unterricht verlassen` eintragen, als Betreff `Verweis für unerlaubtes Verlassen des Unterrichts` und als Beschreibung `Benachrichtigung der Eltern, dass ein Schüler unerlaubt den Unterricht verlassen hat`.
+3. Im Vorlagentext mit `Sehr geehrte Eltern von ` beginnen und dann unter `Bausteine` auf `Schüler(in)name` klicken. Dadurch wird im Text ein Platzhalter eingefügt, der später unter `E-Mail erstellen` automatisch ersetzt wird. Danach den Vorlagentext fertig schreiben und die Vorlage speichern.
+4. Auf `E-Mail erstellen` wechseln, die Felder ausfüllen und `E-Mail generieren` anklicken. Der generierte Text wird danach automatisch in die Zwischenablage kopiert und kann direkt an anderer Stelle eingefügt werden.
 
 ## Datenschutz
 
@@ -49,22 +59,24 @@ Die App speichert Daten lokal im Browser über `localStorage`.
 
 ## Export und Import
 
-Über den Bereich **Import/Export** können alle Vorlagen und Einstellungen gesichert werden.
+Über den Bereich `Import/Export` können alle Vorlagen und Einstellungen gesichert werden.
 
-- **Daten exportieren** erzeugt eine JSON-Datei mit allen Vorlagen und Einstellungen
-- **Daten importieren** stellt diese Daten wieder her
-- Bei einem Import können bestehende Daten ersetzt oder importierte Vorlagen hinzugefügt werden
+- `Daten exportieren` erzeugt eine JSON-Datei mit allen Vorlagen und Einstellungen
+- `Vorlage exportieren` speichert nur die aktuell ausgewählte Vorlage
+- `Daten importieren` stellt Sicherungen wieder her oder fügt Vorlagen hinzu
+- Beim Import können bestehende Daten ersetzt oder importierte Vorlagen hinzugefügt werden
 
-## GitHub Pages veröffentlichen
+Sicherheits- und Reputationshinweis: Exportdateien können personenbezogene oder sensible schulische Formulierungen enthalten. Vor einer Weitergabe sollte geprüft werden, ob das wirklich erforderlich und zulässig ist.
 
-Die App ist für eine statische Veröffentlichung geeignet. Wenn du sie auf GitHub Pages bereitstellen willst, ist der einfachste Weg:
+## GitHub Pages
 
-1. Das Repository nach GitHub pushen.
-2. In den Repository-Einstellungen unter **Pages** als Quelle den Branch `gh-pages` wählen.
-3. Die Datei `mailvorlagen-generator.html` im Root des Branches ablegen.
-4. Optional eine `index.html` im Root anlegen, die auf die App-Datei verweist oder die App direkt als Startseite verwendet.
+Die App kann statisch über GitHub Pages veröffentlicht werden.
 
-Wenn du die App direkt als Startseite veröffentlichen willst, ist es praktisch, die Datei im `gh-pages`-Branch zusätzlich als `index.html` bereitzustellen.
+1. Änderungen auf den Branch `gh-pages` committen.
+2. Den Branch mit `git push origin gh-pages` nach GitHub pushen.
+3. In den Repository-Einstellungen unter `Pages` den Branch `gh-pages` als Quelle auswählen.
+
+Für GitHub Pages liegt mit `index.html` bereits ein Einstieg im Repository, der auf `mailvorlagen-generator.html` weiterleitet.
 
 ## Technische Hinweise
 
@@ -72,6 +84,7 @@ Wenn du die App direkt als Startseite veröffentlichen willst, ist es praktisch,
 - Keine Frameworks
 - Keine Build-Tools
 - Keine externen Bibliotheken
+- Single-File-App mit lokaler Speicherung im Browser
 
 ## Lokale Entwicklung
 
