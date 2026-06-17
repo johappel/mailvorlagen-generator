@@ -134,6 +134,11 @@
       min-height: 120px;
     }
 
+    .option-editor-textarea {
+      min-height: 210px;
+      line-height: 1.55;
+    }
+
     .app-shell {
       max-width: 1220px;
       margin: 0 auto;
@@ -752,8 +757,9 @@
         <input id="options-field-label-input" type="text" required>
       </div>
       <div class="field">
-        <label for="options-field-options-input">Auswahl-Texte, ein Text pro Zeile</label>
-        <textarea id="options-field-options-input" rows="8"></textarea>
+        <label for="options-field-options-input">Auswahl-Texte</label>
+        <textarea id="options-field-options-input" class="option-editor-textarea" rows="10"></textarea>
+        <div class="field-note">Jeder Auswahl-Text wird hier als eigener Block mit etwas Abstand angezeigt. Leerzeilen dazwischen sind erlaubt und werden beim Speichern ignoriert.</div>
       </div>
       <div class="grid">
         <div class="field">
@@ -763,6 +769,15 @@
             <option value="inline">Fließtext</option>
           </select>
         </div>
+        <div class="field">
+          <label for="options-field-selection-mode-select">Erlaubte Auswahl</label>
+          <select id="options-field-selection-mode-select">
+            <option value="multiple">Mehrere Optionen</option>
+            <option value="single">Nur eine Option</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid">
         <div class="field">
           <label class="checkbox-option" for="options-field-hide-unchecked-input">
             <input id="options-field-hide-unchecked-input" type="checkbox" checked>
@@ -901,6 +916,7 @@
         optionsFieldLabelInput: document.getElementById("options-field-label-input"),
         optionsFieldOptionsInput: document.getElementById("options-field-options-input"),
         optionsFieldDisplaySelect: document.getElementById("options-field-display-select"),
+        optionsFieldSelectionModeSelect: document.getElementById("options-field-selection-mode-select"),
         optionsFieldHideUncheckedInput: document.getElementById("options-field-hide-unchecked-input"),
         optionsFieldRequiredInput: document.getElementById("options-field-required-input"),
         dateFieldForm: document.getElementById("date-field-form"),
@@ -988,6 +1004,7 @@
                 "hat sich für eine gute Lernatmosphäre eingesetzt"
               ],
               display: "list",
+              selectionMode: "multiple",
               hideUnchecked: true,
               required: true
             },
@@ -1075,6 +1092,7 @@
               return typeof option === "string" && option.trim();
             }) : [],
             display: field.display === "inline" ? "inline" : "list",
+            selectionMode: field.selectionMode === "single" ? "single" : "multiple",
             hideUnchecked: field.hideUnchecked !== false,
             required: Boolean(field.required)
           };
@@ -1393,9 +1411,9 @@
             }
             return field.rows > 1 ? "Dies ist ein Beispieltext." : "Beispielwert";
           }
-          if (field.type === "options") {
-            return field.options.slice();
-          }
+        if (field.type === "options") {
+          return field.selectionMode === "single" ? (field.options[0] ? [field.options[0]] : []) : field.options.slice();
+        }
         }
 
         if (field.type === "setting") {
@@ -1434,7 +1452,7 @@
       }
 
       function renderOptionsField(field, value) {
-        var selected = Array.isArray(value) ? value : [];
+        var selected = normalizeSelectedOptions(field, value);
         if (!selected.length && field.hideUnchecked) {
           return "";
         }
@@ -1454,6 +1472,16 @@
         return field.options.map(function (option) {
           return (selected.indexOf(option) >= 0 ? "☑ " : "☐ ") + option;
         }).join("\n");
+      }
+
+      function normalizeSelectedOptions(field, value) {
+        var selected = Array.isArray(value) ? value.filter(function (item) {
+          return typeof item === "string" && item.trim();
+        }) : [];
+        if (field.selectionMode === "single") {
+          return selected.length ? [selected[0]] : [];
+        }
+        return selected;
       }
 
       function renderTemplate(template, formValues, settings, mode) {
@@ -1487,9 +1515,11 @@
           }
 
           if (field.type === "options") {
-            var selected = Array.isArray(value) ? value : [];
+            var selected = normalizeSelectedOptions(field, value);
             if (field.required && !selected.length) {
-              warnings.push("Bitte wählen Sie mindestens einen Punkt bei \"" + field.label + "\" aus.");
+              warnings.push(field.selectionMode === "single"
+                ? "Bitte wählen Sie bei \"" + field.label + "\" eine Option aus."
+                : "Bitte wählen Sie mindestens einen Punkt bei \"" + field.label + "\" aus.");
             }
             return renderOptionsField(field, selected);
           }
@@ -1695,16 +1725,22 @@
             checkboxGroup.className = "checkbox-group";
 
             field.options.forEach(function (option, index) {
+              var selectedOptions = normalizeSelectedOptions(field, uiState.formValues[field.id]);
               var optionLabel = document.createElement("label");
               optionLabel.className = "checkbox-option";
               optionLabel.htmlFor = "compose-field-" + field.id + "-" + index;
 
-              var checkbox = document.createElement("input");
-              checkbox.type = "checkbox";
-              checkbox.id = "compose-field-" + field.id + "-" + index;
-              checkbox.checked = Array.isArray(uiState.formValues[field.id]) && uiState.formValues[field.id].indexOf(option) >= 0;
-              checkbox.addEventListener("change", function (event) {
+              var input = document.createElement("input");
+              input.type = field.selectionMode === "single" ? "radio" : "checkbox";
+              input.name = "compose-field-" + field.id;
+              input.id = "compose-field-" + field.id + "-" + index;
+              input.checked = selectedOptions.indexOf(option) >= 0;
+              input.addEventListener("change", function (event) {
                 var current = Array.isArray(uiState.formValues[field.id]) ? uiState.formValues[field.id].slice() : [];
+                if (field.selectionMode === "single") {
+                  uiState.formValues[field.id] = event.target.checked ? [option] : [];
+                  return;
+                }
                 if (event.target.checked) {
                   if (current.indexOf(option) === -1) {
                     current.push(option);
@@ -1720,7 +1756,7 @@
               var text = document.createElement("span");
               text.textContent = option;
 
-              optionLabel.appendChild(checkbox);
+              optionLabel.appendChild(input);
               optionLabel.appendChild(text);
               checkboxGroup.appendChild(optionLabel);
             });
@@ -1770,7 +1806,7 @@
           return "Textfeld, " + field.rows + " Zeile(n)" + (field.required ? ", Pflichtfeld" : "");
         }
         if (field.type === "options") {
-          return "Auswahl, " + field.options.length + " Option(en), Darstellung: " + field.display + (field.required ? ", Pflichtfeld" : "");
+          return "Auswahl, " + field.options.length + " Option(en), " + (field.selectionMode === "single" ? "eine Auswahl" : "mehrere Auswahlen") + ", Darstellung: " + field.display + (field.required ? ", Pflichtfeld" : "");
         }
         if (field.type === "setting") {
           return "Einstellung aus " + field.settingKey;
@@ -2124,11 +2160,12 @@
         var field = fieldId ? template.fields[fieldId] : null;
         elements.optionsFieldDialogTitle.textContent = field ? "Auswahl-Texte bearbeiten" : "Auswahl-Texte einfügen";
         elements.optionsFieldLabelInput.value = field ? field.label : "Auswahl";
-        elements.optionsFieldOptionsInput.value = field ? field.options.join("\n") : [
+        elements.optionsFieldOptionsInput.value = formatOptionsForEditor(field ? field.options : [
           "hat durch gute Fragen den Unterricht bereichert",
           "hat eigene Ideen eingebracht"
-        ].join("\n");
+        ]);
         elements.optionsFieldDisplaySelect.value = field ? field.display : "list";
+        elements.optionsFieldSelectionModeSelect.value = field && field.selectionMode === "single" ? "single" : "multiple";
         elements.optionsFieldHideUncheckedInput.checked = field ? field.hideUnchecked !== false : true;
         elements.optionsFieldRequiredInput.checked = field ? Boolean(field.required) : false;
         openDialog(elements.dialogs.options);
@@ -2217,21 +2254,44 @@
         var template = collectEditorTemplate();
         var label = elements.optionsFieldLabelInput.value.trim() || "Auswahl";
         var fieldId = uiState.activeDialogFieldId || createReadableFieldId(label, template.fields);
-        var options = elements.optionsFieldOptionsInput.value
-          .replace(/\r\n/g, "\n")
-          .split("\n")
-          .map(function (item) { return item.trim(); })
-          .filter(Boolean);
+        var options = parseOptionsFromEditor(elements.optionsFieldOptionsInput.value);
         applyFieldChange({
           id: fieldId,
           type: "options",
           label: label,
           options: options,
           display: elements.optionsFieldDisplaySelect.value === "inline" ? "inline" : "list",
+          selectionMode: elements.optionsFieldSelectionModeSelect.value === "single" ? "single" : "multiple",
           hideUnchecked: elements.optionsFieldHideUncheckedInput.checked,
           required: elements.optionsFieldRequiredInput.checked
         });
         elements.dialogs.options.close();
+      }
+
+      function formatOptionsForEditor(options) {
+        return (Array.isArray(options) ? options : [])
+          .map(function (item) { return typeof item === "string" ? item.trim() : ""; })
+          .filter(Boolean)
+          .join("\n\n");
+      }
+
+      function parseOptionsFromEditor(value) {
+        var normalized = String(value || "").replace(/\r\n/g, "\n").trim();
+        if (!normalized) {
+          return [];
+        }
+
+        if (/\n\s*\n/.test(normalized)) {
+          return normalized
+            .split(/\n\s*\n+/)
+            .map(function (item) { return item.replace(/\n+/g, " ").trim(); })
+            .filter(Boolean);
+        }
+
+        return normalized
+          .split("\n")
+          .map(function (item) { return item.trim(); })
+          .filter(Boolean);
       }
 
       function submitDateFieldForm(event) {
