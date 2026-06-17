@@ -1467,10 +1467,16 @@
         return "";
       }
 
-      function renderOptionsField(field, value) {
+      function renderOptionsField(field, value, mode) {
         var selected = normalizeSelectedOptions(field, value);
         if (!selected.length && field.hideUnchecked) {
           return "";
+        }
+        if (mode === "preview" && field.selectionMode === "single") {
+          if (field.display === "inline") {
+            return selected[0] || "";
+          }
+          return selected[0] ? "- " + selected[0] : "";
         }
         if (field.display === "inline") {
           if (field.hideUnchecked) {
@@ -1537,7 +1543,7 @@
                 ? "Bitte wählen Sie bei \"" + field.label + "\" eine Option aus."
                 : "Bitte wählen Sie mindestens einen Punkt bei \"" + field.label + "\" aus.");
             }
-            return renderOptionsField(field, selected);
+            return renderOptionsField(field, selected, mode);
           }
 
           if (field.type === "setting") {
