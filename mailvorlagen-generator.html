@@ -814,6 +814,7 @@
       "use strict";
 
       var STORAGE_KEY = "mailvorlagenGenerator.state.v1";
+      var UI_STORAGE_KEY = "mailvorlagenGenerator.ui.v1";
       var APP_VERSION = 1;
       var SETTING_KEYS = ["teacherName", "teacherEmail", "signature", "schoolName"];
       var SETTING_FIELD_CONFIG = {
@@ -830,6 +831,8 @@
         activeTab: "compose",
         composeTemplateId: "",
         editorTemplateId: "",
+        selectedTemplateId: "",
+        transferTemplateId: "",
         formValues: {},
         lastGenerated: { subject: "", body: "", warnings: [] },
         previewResult: { subject: "", body: "Noch keine Vorschau erzeugt.", warnings: [] },
@@ -1234,6 +1237,29 @@
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       }
 
+      function loadUiState() {
+        try {
+          var raw = window.localStorage.getItem(UI_STORAGE_KEY);
+          if (!raw) {
+            return { selectedTemplateId: "", transferTemplateId: "" };
+          }
+          var parsed = JSON.parse(raw);
+          return {
+            selectedTemplateId: typeof parsed.selectedTemplateId === "string" ? parsed.selectedTemplateId : "",
+            transferTemplateId: typeof parsed.transferTemplateId === "string" ? parsed.transferTemplateId : ""
+          };
+        } catch (error) {
+          return { selectedTemplateId: "", transferTemplateId: "" };
+        }
+      }
+
+      function saveUiState() {
+        window.localStorage.setItem(UI_STORAGE_KEY, JSON.stringify({
+          selectedTemplateId: uiState.selectedTemplateId || "",
+          transferTemplateId: uiState.transferTemplateId || ""
+        }));
+      }
+
       function resetState() {
         appState = getDefaultState();
         saveState(appState);
@@ -1305,10 +1331,12 @@
         var template = getTemplateById(templateId);
         uiState.composeTemplateId = template.id;
         uiState.editorTemplateId = template.id;
+        uiState.selectedTemplateId = template.id;
         uiState.formValues = getInitialFormValues(template);
         uiState.lastGenerated = { subject: "", body: "", warnings: [] };
         uiState.previewResult = { subject: "", body: "Noch keine Vorschau erzeugt.", warnings: [] };
         uiState.activeDialogFieldId = null;
+        saveUiState();
         if (!resetMessagesOnly) {
           uiState.messages = [];
         }
@@ -1582,15 +1610,24 @@
 
       function renderTemplateSelects() {
         var sortedTemplates = getTemplatesSortedByRecent();
+        var transferTemplates = sortedTemplates.slice();
         var options = sortedTemplates.map(function (template) {
+          return '<option value="' + escapeHtml(template.id) + '">' + escapeHtml(template.title) + "</option>";
+        }).join("");
+        var transferOptions = transferTemplates.map(function (template) {
           return '<option value="' + escapeHtml(template.id) + '">' + escapeHtml(template.title) + "</option>";
         }).join("");
         elements.composeTemplateSelect.innerHTML = options;
         elements.templateEditorSelect.innerHTML = options;
-        elements.transferTemplateSelect.innerHTML = options;
+        elements.transferTemplateSelect.innerHTML = transferOptions;
         elements.composeTemplateSelect.value = uiState.composeTemplateId;
         elements.templateEditorSelect.value = uiState.editorTemplateId;
-        elements.transferTemplateSelect.value = uiState.editorTemplateId || sortedTemplates[0].id;
+        var storedTransferTemplateId = uiState.transferTemplateId || "";
+        var transferTemplateId = storedTransferTemplateId && transferTemplates.some(function (template) {
+          return template.id === storedTransferTemplateId;
+        }) ? storedTransferTemplateId : (transferTemplates[0] ? transferTemplates[0].id : "");
+        uiState.transferTemplateId = transferTemplateId;
+        elements.transferTemplateSelect.value = transferTemplateId;
       }
 
       function renderComposeForm(template) {
@@ -2545,7 +2582,9 @@
           return;
         }
         window.localStorage.removeItem(STORAGE_KEY);
+        window.localStorage.removeItem(UI_STORAGE_KEY);
         appState = getDefaultState();
+        uiState.transferTemplateId = "";
         saveState(appState);
         syncTemplateSelection(appState.templates[0].id, true);
         pushMessage("status", "Alle lokalen Daten wurden gelöscht.");
@@ -2616,17 +2655,22 @@
 
         elements.composeTemplateSelect.addEventListener("change", function (event) {
           uiState.composeTemplateId = event.target.value;
+          uiState.editorTemplateId = event.target.value;
+          uiState.selectedTemplateId = event.target.value;
           uiState.formValues = getInitialFormValues(getTemplateById(uiState.composeTemplateId));
           uiState.lastGenerated = { subject: "", body: "", warnings: [] };
+          saveUiState();
           renderAll();
         });
 
         elements.templateEditorSelect.addEventListener("change", function (event) {
           uiState.editorTemplateId = event.target.value;
           uiState.composeTemplateId = event.target.value;
+          uiState.selectedTemplateId = event.target.value;
           uiState.formValues = getInitialFormValues(getTemplateById(uiState.composeTemplateId));
           uiState.previewResult = { subject: "", body: "Noch keine Vorschau erzeugt.", warnings: [] };
           uiState.lastGenerated = { subject: "", body: "", warnings: [] };
+          saveUiState();
           renderAll();
         });
 
@@ -2641,7 +2685,11 @@
         elements.exportDataButton.addEventListener("click", exportState);
         elements.exportTemplateButton.addEventListener("click", exportSingleTemplate);
         elements.deleteDataButton.addEventListener("click", deleteAllData);
-        elements.transferTemplateSelect.addEventListener("change", renderTransferInfo);
+        elements.transferTemplateSelect.addEventListener("change", function (event) {
+          uiState.transferTemplateId = event.target.value;
+          saveUiState();
+          renderTransferInfo();
+        });
         elements.templateSubjectFieldSelect.addEventListener("change", function (event) {
           appendFieldToSubject(event.target.value);
         });
@@ -2687,14 +2735,21 @@
 
       function init() {
         var loaded = loadState();
+        var loadedUi = loadUiState();
         appState = loaded.state;
-        syncTemplateSelection(appState.templates[0].id, true);
+        var latestTemplate = getTemplatesSortedByRecent()[0] || appState.templates[0];
+        var initialTemplateId = loadedUi.selectedTemplateId && appState.templates.some(function (template) {
+          return template.id === loadedUi.selectedTemplateId;
+        }) ? loadedUi.selectedTemplateId : latestTemplate.id;
+        uiState.transferTemplateId = loadedUi.transferTemplateId;
+        syncTemplateSelection(initialTemplateId, true);
         if (loaded.issues.length) {
           setMessages(loaded.issues.map(function (item) {
             return { type: "warning-box", text: item };
           }));
         }
         saveState(appState);
+        saveUiState();
         attachEvents();
         renderAll();
       }
