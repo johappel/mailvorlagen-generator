@@ -206,7 +206,11 @@ Unter dem Vorlagentext sehen Sie die Feldliste der aktuellen Vorlage.
 Dort können Sie:
 
 - einzelne Felder erneut bearbeiten
+- die Reihenfolge der ausfüllbaren Felder mit den Pfeilbuttons verändern
 - Felder entfernen
+
+Die Reihenfolge in dieser Liste bestimmt auch die Reihenfolge der Eingabefelder im Bereich `E-Mail erstellen`.
+Felder aus den Einstellungen, zum Beispiel `Schulname`, `Lehrername` und `Signatur`, bleiben unten in der Liste, weil sie im Formular nicht ausgefüllt werden müssen.
 
 Wenn Sie `Entfernen` klicken, fragt die App nach einer Bestätigung.
 

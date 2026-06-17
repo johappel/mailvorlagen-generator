@@ -393,6 +393,25 @@
       align-items: start;
     }
 
+    .field-card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+      align-items: flex-start;
+    }
+
+    .order-actions {
+      display: inline-flex;
+      gap: 6px;
+    }
+
+    .order-actions button {
+      min-width: 46px;
+      padding-left: 0.7rem;
+      padding-right: 0.7rem;
+    }
+
     .field-card-header strong {
       display: block;
     }
@@ -603,7 +622,7 @@
               </div>
               <div class="field">
                 <label class="visually-hidden" for="template-subject-field-select">Feld in Betreff einfügen</label>
-                <select id="template-subject-field-select" class="subject-insert-select" aria-label="Feld in Betreff einfügen">
+                <select id="template-subject-field-select" class="subject-insert-select" aria-label="Feld in Betreff einfügen" title="Feld in Betreff einfügen">
                   <option value="">{}</option>
                 </select>
               </div>
@@ -648,7 +667,7 @@
               <div id="preview-warnings" class="stack"></div>
             </div>
             <div>
-              <h3>Felder dieser Vorlage</h3>
+              <h3>Formularfelder dieser Vorlage konfigurieren</h3>
               <div id="template-field-list" class="field-list"></div>
             </div>
             
@@ -1080,7 +1099,8 @@
             label: typeof field.label === "string" && field.label.trim() ? field.label.trim() : "Textfeld",
             rows: Number(field.rows) > 1 ? Math.max(2, Number(field.rows)) : 1,
             required: Boolean(field.required),
-            placeholder: typeof field.placeholder === "string" ? field.placeholder : ""
+            placeholder: typeof field.placeholder === "string" ? field.placeholder : "",
+            order: Number.isFinite(Number(field.order)) ? Number(field.order) : 0
           };
         }
 
@@ -1095,7 +1115,8 @@
             display: field.display === "inline" ? "inline" : "list",
             selectionMode: field.selectionMode === "single" ? "single" : "multiple",
             hideUnchecked: field.hideUnchecked !== false,
-            required: Boolean(field.required)
+            required: Boolean(field.required),
+            order: Number.isFinite(Number(field.order)) ? Number(field.order) : 0
           };
         }
 
@@ -1108,7 +1129,8 @@
             id: field.id,
             type: "setting",
             label: typeof field.label === "string" && field.label.trim() ? field.label.trim() : "Einstellung",
-            settingKey: field.settingKey
+            settingKey: field.settingKey,
+            order: Number.isFinite(Number(field.order)) ? Number(field.order) : 0
           };
         }
 
@@ -1119,7 +1141,8 @@
             label: typeof field.label === "string" && field.label.trim() ? field.label.trim() : "Datum",
             mode: field.mode === "manual" || field.mode === "specific" ? field.mode : "today",
             formatFromSettings: field.formatFromSettings !== false,
-            specificDate: typeof field.specificDate === "string" ? field.specificDate : ""
+            specificDate: typeof field.specificDate === "string" ? field.specificDate : "",
+            order: Number.isFinite(Number(field.order)) ? Number(field.order) : 0
           };
         }
 
@@ -1154,6 +1177,7 @@
 
         migrateReadableFieldIds(normalized);
         ensureCoreStudentField(normalized);
+        normalizeFieldOrder(normalized.fields);
 
         if (!Object.keys(normalized.fields).length) {
           issues.push("Die Vorlage \"" + normalized.title + "\" enthält keine gültigen Felder.");
@@ -1332,7 +1356,7 @@
 
       function getInitialFormValues(template) {
         var values = {};
-        Object.keys(template.fields).forEach(function (fieldId) {
+        getOrderedFieldIds(template.fields).forEach(function (fieldId) {
           var field = template.fields[fieldId];
           if (field.type === "options") {
             values[fieldId] = [];
@@ -1412,7 +1436,43 @@
           field.id = normalizedId;
           normalized[normalizedId] = field;
         });
+        normalizeFieldOrder(normalized);
         return normalized;
+      }
+
+      function getOrderedFieldIds(fields) {
+        var fieldIds = Object.keys(fields || {});
+        var originalIndex = {};
+        fieldIds.forEach(function (fieldId, index) {
+          originalIndex[fieldId] = index;
+        });
+        return fieldIds.sort(function (leftId, rightId) {
+          var left = fields[leftId] || {};
+          var right = fields[rightId] || {};
+          var leftIsSetting = left.type === "setting";
+          var rightIsSetting = right.type === "setting";
+          if (leftIsSetting !== rightIsSetting) {
+            return leftIsSetting ? 1 : -1;
+          }
+          var leftOrder = Number.isFinite(Number(left.order)) && Number(left.order) > 0 ? Number(left.order) : Number.MAX_SAFE_INTEGER;
+          var rightOrder = Number.isFinite(Number(right.order)) && Number(right.order) > 0 ? Number(right.order) : Number.MAX_SAFE_INTEGER;
+          if (leftOrder !== rightOrder) {
+            return leftOrder - rightOrder;
+          }
+          return originalIndex[leftId] - originalIndex[rightId];
+        });
+      }
+
+      function normalizeFieldOrder(fields) {
+        getOrderedFieldIds(fields).forEach(function (fieldId, index) {
+          fields[fieldId].order = index + 1;
+        });
+      }
+
+      function getNextFieldOrder(fields) {
+        return getOrderedFieldIds(fields).filter(function (fieldId) {
+          return fields[fieldId] && fields[fieldId].type !== "setting";
+        }).length + 1;
       }
 
       function buildDefaultValueForField(field, settings, mode) {
@@ -1603,7 +1663,7 @@
         var warnings = [];
         var searchableText = (template.subject || "") + "\n" + (template.body || "");
         var placeholderIds = collectPlaceholderIds(searchableText);
-        var knownIds = Object.keys(template.fields);
+        var knownIds = getOrderedFieldIds(template.fields);
 
         if (!template.title) {
           warnings.push("Die Vorlage sollte einen Namen haben.");
@@ -1697,7 +1757,7 @@
           container.appendChild(description);
         }
 
-        Object.keys(template.fields).forEach(function (fieldId) {
+        getOrderedFieldIds(template.fields).forEach(function (fieldId) {
           var field = template.fields[fieldId];
 
           if (field.type === "setting") {
@@ -1841,7 +1901,7 @@
 
       function renderSubjectFieldSelect(template) {
         var allowedTypes = { text: true, options: true, setting: true, date: true };
-        var fieldIds = Object.keys(template.fields || {}).filter(function (fieldId) {
+        var fieldIds = getOrderedFieldIds(template.fields).filter(function (fieldId) {
           var field = template.fields[fieldId];
           return field && allowedTypes[field.type];
         });
@@ -1851,7 +1911,7 @@
           return '<option value="' + escapeHtml(field.id) + '">' + escapeHtml(field.label) + "</option>";
         }).join("");
 
-        elements.templateSubjectFieldSelect.innerHTML = '<option value="">{}</option>' + optionsHtml;
+        elements.templateSubjectFieldSelect.innerHTML = '<option value="">{ }</option>' + optionsHtml;
         elements.templateSubjectFieldSelect.value = "";
       }
 
@@ -1863,12 +1923,17 @@
         elements.templateBodyInput.value = template.body || "";
         elements.templateFieldList.innerHTML = "";
 
-        var fieldIds = Object.keys(template.fields);
+        var fieldIds = getOrderedFieldIds(template.fields);
+        var movableFieldIds = fieldIds.filter(function (fieldId) {
+          var field = template.fields[fieldId];
+          return field && field.type !== "setting";
+        });
         if (!fieldIds.length) {
           elements.templateFieldList.innerHTML = '<div class="note">Diese Vorlage enthält noch keine Felder.</div>';
         } else {
           fieldIds.forEach(function (fieldId) {
             var field = template.fields[fieldId];
+            var movableIndex = movableFieldIds.indexOf(fieldId);
             var card = document.createElement("div");
             card.className = "field-card";
 
@@ -1885,7 +1950,38 @@
             textBlock.appendChild(meta);
 
             var buttonGroup = document.createElement("div");
-            buttonGroup.className = "actions";
+            buttonGroup.className = "field-card-actions";
+
+            if (movableIndex >= 0) {
+              var orderGroup = document.createElement("div");
+              orderGroup.className = "order-actions";
+
+              var moveUpButton = document.createElement("button");
+              moveUpButton.type = "button";
+              moveUpButton.className = "ghost";
+              moveUpButton.textContent = "↑";
+              moveUpButton.title = "Feld nach oben verschieben";
+              moveUpButton.setAttribute("aria-label", "Feld nach oben verschieben");
+              moveUpButton.disabled = movableIndex === 0;
+              moveUpButton.addEventListener("click", function () {
+                moveFieldInTemplate(fieldId, -1);
+              });
+              orderGroup.appendChild(moveUpButton);
+
+              var moveDownButton = document.createElement("button");
+              moveDownButton.type = "button";
+              moveDownButton.className = "ghost";
+              moveDownButton.textContent = "↓";
+              moveDownButton.title = "Feld nach unten verschieben";
+              moveDownButton.setAttribute("aria-label", "Feld nach unten verschieben");
+              moveDownButton.disabled = movableIndex === movableFieldIds.length - 1;
+              moveDownButton.addEventListener("click", function () {
+                moveFieldInTemplate(fieldId, 1);
+              });
+              orderGroup.appendChild(moveDownButton);
+
+              buttonGroup.appendChild(orderGroup);
+            }
 
             if (field.type === "text" || field.type === "options" || field.type === "date") {
               var editButton = document.createElement("button");
@@ -2010,7 +2106,7 @@
 
       function createPreviewValues(template) {
         var values = {};
-        Object.keys(template.fields).forEach(function (fieldId) {
+        getOrderedFieldIds(template.fields).forEach(function (fieldId) {
           var field = template.fields[fieldId];
           values[fieldId] = buildDefaultValueForField(field, appState.settings, "preview");
         });
@@ -2234,6 +2330,8 @@
         var currentTemplate = collectEditorTemplate();
         var isNew = !uiState.activeDialogFieldId;
         var fieldId = uiState.activeDialogFieldId || field.id;
+        var previousField = currentTemplate.fields[fieldId];
+        field.order = isNew ? getNextFieldOrder(currentTemplate.fields) : (previousField && previousField.order ? previousField.order : getNextFieldOrder(currentTemplate.fields));
         currentTemplate.fields[fieldId] = field;
         if (isNew) {
           insertAtSelection("{{" + field.id + "}}");
@@ -2250,6 +2348,41 @@
         uiState.composeTemplateId = currentTemplate.id;
         renderAll();
         pushMessage("status", isNew ? "Das Feld wurde eingefügt." : "Das Feld wurde aktualisiert.");
+      }
+
+      function moveFieldInTemplate(fieldId, direction) {
+        var template = collectEditorTemplate();
+        var movableFieldIds = getOrderedFieldIds(template.fields).filter(function (orderedFieldId) {
+          var field = template.fields[orderedFieldId];
+          return field && field.type !== "setting";
+        });
+        var settingFieldIds = getOrderedFieldIds(template.fields).filter(function (orderedFieldId) {
+          var field = template.fields[orderedFieldId];
+          return field && field.type === "setting";
+        });
+        var currentIndex = movableFieldIds.indexOf(fieldId);
+        var nextIndex = currentIndex + direction;
+        if (currentIndex === -1 || nextIndex < 0 || nextIndex >= movableFieldIds.length) {
+          return;
+        }
+
+        var movedFieldId = movableFieldIds[currentIndex];
+        movableFieldIds[currentIndex] = movableFieldIds[nextIndex];
+        movableFieldIds[nextIndex] = movedFieldId;
+        movableFieldIds.concat(settingFieldIds).forEach(function (orderedFieldId, index) {
+          template.fields[orderedFieldId].order = index + 1;
+        });
+        template.updatedAt = nowIso();
+
+        var index = appState.templates.findIndex(function (item) {
+          return item.id === template.id;
+        });
+        if (index >= 0) {
+          appState.templates[index] = template;
+        }
+        saveState(appState);
+        renderAll();
+        pushMessage("status", "Die Reihenfolge der Felder wurde geändert.");
       }
 
       function submitTextFieldForm(event) {
@@ -2336,11 +2469,13 @@
           return;
         }
         updateEditorTemplateInMemory(function (template) {
+          var existingOrder = template.fields[config.id] && template.fields[config.id].order;
           template.fields[config.id] = {
             id: config.id,
             type: "setting",
             label: config.label,
-            settingKey: settingKey
+            settingKey: settingKey,
+            order: existingOrder || getNextFieldOrder(template.fields)
           };
           insertAtSelection("{{" + config.id + "}}");
           template.subject = elements.templateSubjectInput.value.replace(/\r\n/g, "\n");
@@ -2353,6 +2488,9 @@
       function insertCoreStudentField() {
         updateEditorTemplateInMemory(function (template) {
           ensureCoreStudentField(template);
+          if (!template.fields[CORE_STUDENT_FIELD_ID].order) {
+            template.fields[CORE_STUDENT_FIELD_ID].order = getNextFieldOrder(template.fields);
+          }
           insertAtSelection("{{" + CORE_STUDENT_FIELD_ID + "}}");
           template.subject = elements.templateSubjectInput.value.replace(/\r\n/g, "\n");
           template.body = elements.templateBodyInput.value.replace(/\r\n/g, "\n");
